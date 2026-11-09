@@ -50,7 +50,7 @@ button:hover{background:#45aaff}
       Get behind the wheel and take control.
     </p>
     <button id="startButton">START PATROL →</button>
-    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.3 | CAMERA UPDATE</p>
+    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.4 | CAMERA FIX</p>
   </div>
 </div>
 
@@ -64,6 +64,7 @@ button:hover{background:#45aaff}
     PATROL UNIT 01
     <div id="lightStatus">ELS: OFF</div>
     <div id="sirenStatus" style="margin-top:6px;color:#b4c2d0">SIREN: OFF</div>
+    <div id="cameraStatus" style="margin-top:6px;color:#58b9ff">CAMERA: CHASE</div>
   </div>
 
   <div id="message">PATROL STARTED</div>
@@ -80,7 +81,7 @@ button:hover{background:#45aaff}
     <span class="key">SPACE</span> HANDBRAKE<br>
     <span class="key">J</span> EMERGENCY LIGHTS<br>
     <span class="key">R</span> SIREN<br>
-    <span class="key">C</span> CAMERA<br>
+    <span class="key">C</span> CHANGE CAMERA<br>
     <span class="key">ESC</span> PAUSE
   </div>
 </div>
@@ -345,7 +346,10 @@ let started=false;
 let paused=false;
 let lightsOn=false;
 let sirenOn=false;
-let alternateCamera=false;
+
+// 0 = close chase camera
+// 1 = hood / driver camera
+let cameraMode=0;
 
 const keys={};
 const clock=new THREE.Clock();
@@ -361,7 +365,16 @@ window.addEventListener('keydown',e=>{
 
   if(e.code==='KeyJ')toggleLights();
   if(e.code==='KeyR')toggleSiren();
-  if(e.code==='KeyC')alternateCamera=!alternateCamera;
+
+  if(e.code==='KeyC'){
+    cameraMode=(cameraMode+1)%2;
+
+    document.getElementById('cameraStatus').textContent=
+      'CAMERA: '+(cameraMode===0?'CHASE':'HOOD');
+
+    showMessage(cameraMode===0?'CHASE CAMERA':'HOOD CAMERA');
+  }
+
   if(e.code==='Escape'&&started)togglePause();
 });
 
@@ -498,42 +511,74 @@ function hitsBuilding(x,z){
 }
 
 // ==========================================
-// GTA-STYLE FIXED CAMERA
+// CAMERA SYSTEM
 // ==========================================
 
 const cameraTarget=new THREE.Vector3();
 const cameraDesired=new THREE.Vector3();
 const lookTarget=new THREE.Vector3();
+const cameraOffset=new THREE.Vector3();
+const forwardVector=new THREE.Vector3();
 
 function updateCamera(dt){
 
-  // Fixed distance. No speed-based zoom.
-  const distance=9;
-  const height=3.8;
+  // CAMERA 1: CLOSE CHASE VIEW
+  // Distance stays at 9. No speed-based zoom.
+  if(cameraMode===0){
 
-  const offset=new THREE.Vector3(0,height,distance);
+    cameraOffset.set(0,3.8,9);
 
-  offset.applyAxisAngle(
-    new THREE.Vector3(0,1,0),
-    heading
-  );
+    cameraOffset.applyAxisAngle(
+      new THREE.Vector3(0,1,0),
+      heading
+    );
 
-  cameraDesired.copy(car.position).add(offset);
+    cameraDesired.copy(car.position).add(cameraOffset);
 
-  // Smooth following
-  const follow=1-Math.exp(-7*dt);
+    // Aim farther ahead to show more of the road.
+    forwardVector.set(
+      -Math.sin(heading),
+      0,
+      -Math.cos(heading)
+    );
+
+    lookTarget.copy(car.position)
+      .addScaledVector(forwardVector,15);
+
+    lookTarget.y=1.0;
+  }
+
+  // CAMERA 2: HOOD / DRIVER VIEW
+  else{
+
+    cameraOffset.set(0,2.35,-1.25);
+
+    cameraOffset.applyAxisAngle(
+      new THREE.Vector3(0,1,0),
+      heading
+    );
+
+    cameraDesired.copy(car.position).add(cameraOffset);
+
+    forwardVector.set(
+      -Math.sin(heading),
+      0,
+      -Math.cos(heading)
+    );
+
+    lookTarget.copy(car.position)
+      .addScaledVector(forwardVector,32);
+
+    lookTarget.y=1.8;
+  }
+
+  // Smooth camera following. Position never changes with speed.
+  const follow=1-Math.exp(-9*dt);
   camera.position.lerp(cameraDesired,follow);
-
-  // Look slightly ahead of the car
-  lookTarget.set(
-    car.position.x-Math.sin(heading)*5,
-    car.position.y+1.5,
-    car.position.z-Math.cos(heading)*5
-  );
 
   cameraTarget.lerp(
     lookTarget,
-    1-Math.exp(-8*dt)
+    1-Math.exp(-10*dt)
   );
 
   camera.lookAt(cameraTarget);
@@ -627,8 +672,12 @@ document.getElementById('startButton').onclick=()=>{
   document.getElementById('menu').style.display='none';
   document.getElementById('hud').style.display='block';
 
+  cameraMode=0;
+  document.getElementById('cameraStatus').textContent='CAMERA: CHASE';
+
   camera.position.set(0,4,9);
-  cameraTarget.set(0,1.5,-5);
+  cameraTarget.set(0,1,-15);
+
   clock.getDelta();
 };
 
@@ -651,11 +700,13 @@ document.getElementById('exitButton').onclick=()=>{
   speed=0;
   lightsOn=false;
   sirenOn=false;
+  cameraMode=0;
 
   stopSiren();
 
   document.getElementById('lightStatus').textContent='ELS: OFF';
   document.getElementById('sirenStatus').textContent='SIREN: OFF';
+  document.getElementById('cameraStatus').textContent='CAMERA: CHASE';
 
   document.getElementById('pauseScreen').style.display='none';
   document.getElementById('hud').style.display='none';
