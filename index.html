@@ -2,226 +2,39 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CODE 3: Police Simulator</title>
 
 <style>
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  overflow: hidden;
-  background: #101820;
-  color: white;
-  font-family: Arial, sans-serif;
-}
-
-canvas {
-  display: block;
-}
-
-#menu {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background:
-    linear-gradient(90deg, rgba(4,12,22,.96), rgba(4,12,22,.55)),
-    repeating-linear-gradient(135deg, #172333 0px, #172333 2px, #101923 2px, #101923 6px);
-}
-
-.menu-content {
-  width: min(600px, 90%);
-}
-
-.logo {
-  font-size: clamp(42px, 8vw, 76px);
-  font-weight: 1000;
-  letter-spacing: -3px;
-  line-height: 1;
-}
-
-.logo span {
-  color: #38a8ff;
-}
-
-.subtitle {
-  color: #aab9ca;
-  letter-spacing: 5px;
-  font-size: 13px;
-  margin: 14px 0 35px;
-}
-
-.menu-line {
-  width: 80px;
-  height: 4px;
-  background: #258fff;
-  margin-bottom: 20px;
-}
-
-button {
-  border: none;
-  background: #167ce0;
-  color: white;
-  padding: 16px 30px;
-  font-weight: bold;
-  font-size: 15px;
-  cursor: pointer;
-  letter-spacing: 1px;
-  transition: .2s;
-}
-
-button:hover {
-  background: #399dff;
-  transform: translateY(-2px);
-}
-
-.menu-info {
-  margin-top: 30px;
-  color: #8295aa;
-  font-size: 12px;
-  line-height: 1.8;
-}
-
-#hud {
-  display: none;
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-}
-
-.top-left {
-  position: absolute;
-  top: 22px;
-  left: 25px;
-}
-
-.hud-logo {
-  font-size: 23px;
-  font-weight: 1000;
-  letter-spacing: -1px;
-}
-
-.hud-logo span {
-  color: #40aaff;
-}
-
-.hud-sub {
-  font-size: 9px;
-  letter-spacing: 3px;
-  color: #b6c7d8;
-  margin-top: 4px;
-}
-
-.top-right {
-  position: absolute;
-  top: 22px;
-  right: 25px;
-  text-align: right;
-}
-
-.status {
-  font-size: 11px;
-  letter-spacing: 2px;
-  color: #b7c5d5;
-}
-
-#lightStatus {
-  color: #55baff;
-  margin-top: 8px;
-}
-
-.bottom-left {
-  position: absolute;
-  bottom: 25px;
-  left: 25px;
-  background: rgba(8,15,25,.8);
-  padding: 14px 18px;
-  border-left: 3px solid #258fff;
-}
-
-#speed {
-  font-size: 42px;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.unit {
-  font-size: 10px;
-  color: #9eb0c4;
-  letter-spacing: 2px;
-}
-
-.bottom-right {
-  position: absolute;
-  bottom: 25px;
-  right: 25px;
-  background: rgba(8,15,25,.8);
-  padding: 15px 20px;
-  font-size: 11px;
-  color: #c3d0df;
-  line-height: 2;
-  text-align: right;
-}
-
-.key {
-  color: #57b7ff;
-  font-weight: bold;
-}
-
-#message {
-  position: absolute;
-  top: 100px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(8,15,25,.8);
-  padding: 12px 24px;
-  font-size: 12px;
-  letter-spacing: 2px;
-  opacity: 0;
-  transition: opacity .3s;
-}
-
-#pauseScreen {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 8;
-  background: rgba(3,8,15,.85);
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-#pauseScreen h1 {
-  font-size: 48px;
-  letter-spacing: 4px;
-}
-
-@media(max-width:600px) {
-  .bottom-right {
-    font-size: 9px;
-    padding: 8px;
-  }
-  .bottom-left {
-    padding: 10px;
-  }
-  #speed {
-    font-size: 32px;
-  }
-}
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;background:#111923;color:white;font-family:Arial,sans-serif}
+canvas{display:block}
+#menu{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:linear-gradient(120deg,#07111e,#172a3d)}
+.menu-content{width:min(600px,90%)}
+.logo{font-size:clamp(48px,9vw,85px);font-weight:1000;letter-spacing:-4px}
+.logo span,.hud-logo span{color:#35a6ff}
+.subtitle{letter-spacing:5px;color:#9eb3c9;margin:8px 0 35px}
+button{border:0;background:#1686ee;color:white;padding:16px 30px;font-weight:bold;cursor:pointer;letter-spacing:1px}
+button:hover{background:#45aaff}
+#hud{display:none;position:fixed;inset:0;pointer-events:none}
+.top-left{position:absolute;top:22px;left:25px}
+.hud-logo{font-size:25px;font-weight:1000}
+.hud-sub{font-size:9px;letter-spacing:3px;color:#b6c8d9}
+.top-right{position:absolute;right:25px;top:22px;text-align:right;font-size:11px;letter-spacing:2px;color:#d4e2ef}
+#lightStatus{color:#51b8ff;margin-top:9px}
+.bottom-left{position:absolute;bottom:25px;left:25px;background:#0a1523dd;padding:15px 20px;border-left:3px solid #1686ee}
+#speed{font-size:43px;font-weight:900}
+.unit{font-size:10px;letter-spacing:2px;color:#a5b7c8}
+.bottom-right{position:absolute;bottom:25px;right:25px;background:#0a1523dd;padding:14px 18px;font-size:11px;line-height:2;text-align:right;color:#d5e1ed}
+.key{color:#58b9ff;font-weight:bold}
+#message{position:absolute;top:100px;left:50%;transform:translateX(-50%);background:#091727dd;padding:12px 25px;font-size:12px;letter-spacing:2px;opacity:0;transition:opacity .2s}
+#pauseScreen{display:none;position:fixed;inset:0;z-index:9;background:#050b14eF;align-items:center;justify-content:center;text-align:center}
+#pauseScreen h1{font-size:48px;letter-spacing:4px}
+@media(max-width:600px){.bottom-right{font-size:9px;padding:8px}.bottom-left{padding:10px}#speed{font-size:32px}}
 </style>
 
 <script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
-  }
-}
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
 </script>
 </head>
 
@@ -229,22 +42,15 @@ button:hover {
 
 <div id="menu">
   <div class="menu-content">
-    <div class="menu-line"></div>
+    <div style="width:80px;height:4px;background:#1686ee;margin-bottom:20px"></div>
     <div class="logo">CODE <span>3</span></div>
     <div class="subtitle">POLICE SIMULATOR</div>
-
-    <p style="color:#c6d2df;line-height:1.7">
-      Your city. Your patrol. Your responsibility.
-      <br>
+    <p style="color:#c5d3e1;line-height:1.8">
+      Your city. Your patrol. Your responsibility.<br>
       Get behind the wheel and take control.
     </p>
-
     <button id="startButton">START PATROL →</button>
-
-    <div class="menu-info">
-      VERSION 0.1 &nbsp; | &nbsp; EARLY ACCESS<br>
-      OPEN WORLD POLICE SIMULATION
-    </div>
+    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.2 | PERFORMANCE UPDATE</p>
   </div>
 </div>
 
@@ -255,11 +61,12 @@ button:hover {
   </div>
 
   <div class="top-right">
-    <div class="status">PATROL UNIT 01</div>
-    <div class="status" id="lightStatus">EMERGENCY LIGHTS: OFF</div>
+    PATROL UNIT 01
+    <div id="lightStatus">ELS: OFF</div>
+    <div id="sirenStatus" style="margin-top:6px;color:#b4c2d0">SIREN: OFF</div>
   </div>
 
-  <div id="message">EMERGENCY LIGHTS ACTIVATED</div>
+  <div id="message">PATROL STARTED</div>
 
   <div class="bottom-left">
     <div id="speed">000</div>
@@ -268,11 +75,11 @@ button:hover {
 
   <div class="bottom-right">
     <span class="key">W / ↑</span> ACCELERATE<br>
-    <span class="key">S / ↓</span> BRAKE / REVERSE<br>
+    <span class="key">S / ↓</span> BRAKE<br>
     <span class="key">A / D</span> STEER<br>
     <span class="key">SPACE</span> HANDBRAKE<br>
-    <span class="key">E</span> SIREN<br>
-    <span class="key">L</span> LIGHTS<br>
+    <span class="key">J</span> EMERGENCY LIGHTS<br>
+    <span class="key">R</span> SIREN<br>
     <span class="key">C</span> CAMERA<br>
     <span class="key">ESC</span> PAUSE
   </div>
@@ -282,8 +89,7 @@ button:hover {
   <div>
     <h1>PAUSED</h1>
     <p style="color:#9aabba">YOUR PATROL IS ON HOLD</p>
-    <button id="resumeButton">RESUME PATROL</button>
-    <br><br>
+    <button id="resumeButton">RESUME PATROL</button><br><br>
     <button id="exitButton" style="background:#29384a">MAIN MENU</button>
   </div>
 </div>
@@ -291,598 +97,582 @@ button:hover {
 <script type="module">
 import * as THREE from 'three';
 
+// ==========================================
+// PERFORMANCE SETTINGS
+// ==========================================
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x91b5d0);
-scene.fog = new THREE.Fog(0x91b5d0, 180, 650);
+scene.fog = new THREE.Fog(0x91b5d0,180,600);
 
 const camera = new THREE.PerspectiveCamera(
-  65,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
+  65,window.innerWidth/window.innerHeight,0.1,900
 );
 
 const renderer = new THREE.WebGLRenderer({
-  antialias: true,
-  powerPreference: "high-performance"
+  antialias:false,
+  powerPreference:"high-performance",
+  stencil:false,
+  depth:true
 });
 
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-renderer.shadowMap.enabled = false;
-renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.setPixelRatio(1);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.shadowMap.enabled=false;
+
 document.body.appendChild(renderer.domElement);
 
+// ==========================================
 // LIGHTING
+// ==========================================
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x65766a, 2));
+scene.add(new THREE.HemisphereLight(0xffffff,0x65765a,2));
 
-const sunlight = new THREE.DirectionalLight(0xffffff, 2);
-sunlight.position.set(100, 150, 80);
-scene.add(sunlight);
+const sun=new THREE.DirectionalLight(0xffffff,1.5);
+sun.position.set(100,150,80);
+scene.add(sun);
 
+// ==========================================
 // MATERIALS
+// ==========================================
 
-const mat = (color, roughness = 0.85) =>
-  new THREE.MeshStandardMaterial({ color, roughness });
+const material=color=>new THREE.MeshStandardMaterial({
+  color,roughness:1
+});
 
-const grassMat = mat(0x56764b);
-const roadMat = mat(0x30353a);
-const sidewalkMat = mat(0x999b9c);
-const lineMat = mat(0xe6dfb8);
-const buildingMats = [
-  mat(0x9b9b96),
-  mat(0x858e98),
-  mat(0xc2b8a8),
-  mat(0x777d83),
-  mat(0xa9a49a),
-  mat(0x777c72)
-];
+const grass=material(0x56764b);
+const road=material(0x30353a);
+const sidewalk=material(0x92979a);
+const roadLine=material(0xd8d3b7);
 
-// HELPERS
+// ==========================================
+// WORLD
+// ==========================================
 
-function box(parent, x, y, z, sx, sy, sz, material) {
-  const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(sx, sy, sz),
-    material
+function addBox(parent,x,y,z,sx,sy,sz,mat){
+  const mesh=new THREE.Mesh(
+    new THREE.BoxGeometry(sx,sy,sz),mat
   );
-  mesh.position.set(x, y, z);
+  mesh.position.set(x,y,z);
   parent.add(mesh);
   return mesh;
 }
 
-// GROUND
+addBox(scene,0,-0.6,0,900,1,900,grass);
 
-box(scene, 0, -0.55, 0, 900, 1, 900, grassMat);
+// Roads
+const spacing=120;
+const roadWidth=27;
 
-// CITY
+for(let i=-4;i<=4;i++){
+  const p=i*spacing;
 
-const buildings = [];
+  addBox(scene,p,0,0,roadWidth,.1,900,road);
+  addBox(scene,0,0,p,900,.1,roadWidth,road);
 
-function createBuilding(x, z, width, depth, height, material) {
-  const group = new THREE.Group();
-
-  const body = box(
-    group, 0, height / 2, 0,
-    width, height, depth, material
-  );
-
-  // Roof
-  box(
-    group, 0, height + 0.3, 0,
-    width + 1, 0.6, depth + 1,
-    mat(0x53585e)
-  );
-
-  // Windows
-  const windowMat = new THREE.MeshStandardMaterial({
-    color: 0x304e61,
-    metalness: 0.2,
-    roughness: 0.3
-  });
-
-  const floors = Math.max(1, Math.floor(height / 5));
-
-  for (let floor = 0; floor < floors; floor++) {
-    const y = 2.5 + floor * 5;
-
-    for (let wx = -width/2 + 3; wx < width/2 - 2; wx += 6) {
-      box(group, wx, y, depth/2 + 0.05, 2, 2.5, 0.12, windowMat);
-      box(group, wx, y, -depth/2 - 0.05, 2, 2.5, 0.12, windowMat);
-    }
-
-    for (let wz = -depth/2 + 4; wz < depth/2 - 2; wz += 7) {
-      box(group, width/2 + 0.05, y, wz, 2, 2.5, 0.12, windowMat);
-      box(group, -width/2 - 0.05, y, wz, 2, 2.5, 0.12, windowMat);
-    }
-  }
-
-  group.position.set(x, 0, z);
-  scene.add(group);
-
-  buildings.push({
-    minX: x - width/2,
-    maxX: x + width/2,
-    minZ: z - depth/2,
-    maxZ: z + depth/2
-  });
-}
-
-// ROADS
-
-const ROAD_SPACING = 120;
-const ROAD_WIDTH = 25;
-
-for (let i = -4; i <= 4; i++) {
-  const position = i * ROAD_SPACING;
-
-  // Main roads
-  box(scene, position, 0.02, 0, ROAD_WIDTH, 0.1, 900, roadMat);
-  box(scene, 0, 0.02, position, 900, 0.1, ROAD_WIDTH, roadMat);
-
-  // Road markings
-  for (let j = -8; j <= 8; j++) {
-    const p = j * 50;
-
-    box(scene, position, 0.09, p, 0.22, 0.03, 7, lineMat);
-    box(scene, p, 0.09, position, 7, 0.03, 0.22, lineMat);
-  }
-
-  // Sidewalks
-  for (const side of [-1, 1]) {
-    box(
-      scene,
-      position + side * 16,
-      0.12,
-      0,
-      3,
-      0.25,
-      900,
-      sidewalkMat
-    );
-
-    box(
-      scene,
-      0,
-      0.12,
-      position + side * 16,
-      900,
-      0.25,
-      3,
-      sidewalkMat
-    );
+  for(const side of [-1,1]){
+    addBox(scene,p+side*16,.1,0,3,.2,900,sidewalk);
+    addBox(scene,0,.1,p+side*16,900,.2,3,sidewalk);
   }
 }
 
-// BUILD CITY BLOCKS
+// Road markings: InstancedMesh keeps draw calls low.
+const dashGeo=new THREE.BoxGeometry(.22,.04,7);
+const dashMat=new THREE.MeshBasicMaterial({color:0xe6dfb8});
+const dashCount=9*18*2;
+const dashes=new THREE.InstancedMesh(dashGeo,dashMat,dashCount);
+const dummy=new THREE.Object3D();
+let dashIndex=0;
 
-for (let gx = -3; gx <= 3; gx++) {
-  for (let gz = -3; gz <= 3; gz++) {
+for(let i=-4;i<=4;i++){
+  const p=i*spacing;
 
-    const centerX = gx * ROAD_SPACING + 60;
-    const centerZ = gz * ROAD_SPACING + 60;
+  for(let j=-8;j<=8;j++){
+    const z=j*50;
 
-    const count = 2 + Math.floor(Math.random() * 3);
+    dummy.position.set(p,.09,z);
+    dummy.rotation.set(0,0,0);
+    dummy.updateMatrix();
+    dashes.setMatrixAt(dashIndex++,dummy.matrix);
 
-    for (let n = 0; n < count; n++) {
-      const width = 20 + Math.random() * 16;
-      const depth = 20 + Math.random() * 16;
-      const height = 18 + Math.random() * 65;
+    dummy.position.set(z,.09,p);
+    dummy.rotation.y=Math.PI/2;
+    dummy.updateMatrix();
+    dashes.setMatrixAt(dashIndex++,dummy.matrix);
+  }
+}
 
-      const x = centerX + (n % 2 === 0 ? -23 : 23);
-      const z = centerZ + (n < 2 ? -20 : 20);
+dashes.count=dashIndex;
+dashes.instanceMatrix.needsUpdate=true;
+scene.add(dashes);
 
-      createBuilding(
-        x, z, width, depth, height,
-        buildingMats[Math.floor(Math.random() * buildingMats.length)]
+// ==========================================
+// BUILDINGS: INSTANCED RENDERING
+// ==========================================
+
+const buildingGeo=new THREE.BoxGeometry(1,1,1);
+
+const buildingMat=new THREE.MeshStandardMaterial({
+  color:0xffffff,
+  roughness:1
+});
+
+const buildingMesh=new THREE.InstancedMesh(
+  buildingGeo,buildingMat,150
+);
+
+buildingMesh.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+
+const buildingColors=[
+  0x999991,0x858e98,0xc0b6a6,
+  0x747d85,0xa9a49a,0x777c72
+];
+
+const buildings=[];
+let buildingIndex=0;
+
+for(let gx=-3;gx<=3;gx++){
+  for(let gz=-3;gz<=3;gz++){
+
+    const centerX=gx*spacing+60;
+    const centerZ=gz*spacing+60;
+
+    const count=2+Math.floor(Math.random()*2);
+
+    for(let n=0;n<count;n++){
+      const width=18+Math.random()*12;
+      const depth=18+Math.random()*12;
+      const height=20+Math.random()*45;
+
+      const x=centerX+(n%2===0?-23:23);
+      const z=centerZ+(n<2?-20:20);
+
+      dummy.position.set(x,height/2,z);
+      dummy.scale.set(width,height,depth);
+      dummy.rotation.set(0,0,0);
+      dummy.updateMatrix();
+
+      buildingMesh.setMatrixAt(buildingIndex,dummy.matrix);
+      buildingMesh.setColorAt(
+        buildingIndex,
+        new THREE.Color(
+          buildingColors[Math.floor(Math.random()*buildingColors.length)]
+        )
       );
+
+      buildings.push({
+        minX:x-width/2,
+        maxX:x+width/2,
+        minZ:z-depth/2,
+        maxZ:z+depth/2
+      });
+
+      buildingIndex++;
     }
   }
 }
 
-// POLICE CAR
+buildingMesh.count=buildingIndex;
+buildingMesh.instanceMatrix.needsUpdate=true;
+buildingMesh.instanceColor.needsUpdate=true;
+scene.add(buildingMesh);
 
-const car = new THREE.Group();
+// ==========================================
+// POLICE VEHICLE
+// ==========================================
+
+const car=new THREE.Group();
 scene.add(car);
 
-const white = mat(0xe8edf0);
-const black = mat(0x101820);
-const glass = new THREE.MeshStandardMaterial({
-  color: 0x233e50,
-  metalness: 0.4,
-  roughness: 0.2
-});
-const tireMat = mat(0x111111);
-const rimMat = mat(0x9da5ac);
-const blueMat = new THREE.MeshBasicMaterial({ color: 0x087dff });
-const redMat = new THREE.MeshBasicMaterial({ color: 0xff162b });
-const lightOff = mat(0x171c22);
+const white=material(0xe8edf0);
+const black=material(0x101820);
+const glass=material(0x29465a);
+const tires=material(0x111111);
+const rims=material(0x929ba4);
 
-box(car, 0, 1.1, 0, 3.1, 1.15, 6.2, white);
-box(car, 0, 1.15, -0.2, 3.15, 0.65, 2.6, black);
+addBox(car,0,1.05,0,3.1,1.05,6.2,white);
+addBox(car,0,1.15,-.2,3.15,.55,2.6,black);
+addBox(car,0,1.4,-2.15,3,.35,1.65,white);
+addBox(car,0,1.4,2.35,3,.35,1.1,white);
+addBox(car,0,2.15,.2,2.45,1.25,3.1,glass);
+addBox(car,0,2.8,.2,2.5,.15,3.2,white);
 
-// Hood
-box(car, 0, 1.4, -2.15, 3, 0.35, 1.65, white);
+addBox(car,0,.85,-3.15,3.2,.3,.25,black);
+addBox(car,0,.85,3.15,3.2,.3,.25,black);
 
-// Trunk
-box(car, 0, 1.4, 2.35, 3, 0.35, 1.1, white);
-
-// Cabin
-box(car, 0, 2.15, 0.2, 2.45, 1.25, 3.1, glass);
-
-// Roof
-box(car, 0, 2.8, 0.2, 2.5, 0.15, 3.2, white);
-
-// Bumpers
-box(car, 0, 0.85, -3.15, 3.2, 0.3, 0.25, black);
-box(car, 0, 0.85, 3.15, 3.2, 0.3, 0.25, black);
-
-// Police markings
-box(car, 0, 1.35, -0.4, 3.18, 0.48, 0.12, mat(0x101b29));
+// Door stripe
+addBox(car,0,1.35,-.4,3.18,.48,.12,black);
 
 // Lightbar
-box(car, 0, 2.93, 0.2, 1.9, 0.17, 0.5, black);
-const redLight = box(car, -0.55, 3.05, 0.2, 0.7, 0.18, 0.35, redMat);
-const blueLight = box(car, 0.55, 3.05, 0.2, 0.7, 0.18, 0.35, blueMat);
+addBox(car,0,2.93,.2,1.9,.17,.5,black);
 
-// Wheels
-const wheels = [];
+const redMaterial=new THREE.MeshBasicMaterial({color:0xff142b});
+const blueMaterial=new THREE.MeshBasicMaterial({color:0x087dff});
 
-for (const x of [-1.58, 1.58]) {
-  for (const z of [-2, 2]) {
-    const wheel = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.62, 0.62, 0.35, 20),
-      tireMat
+const redLight=addBox(car,-.55,3.05,.2,.7,.18,.35,redMaterial);
+const blueLight=addBox(car,.55,3.05,.2,.7,.18,.35,blueMaterial);
+
+const offMaterial=new THREE.MeshBasicMaterial({color:0x171c22});
+
+const wheels=[];
+
+for(const x of [-1.58,1.58]){
+  for(const z of [-2,2]){
+    const wheel=new THREE.Mesh(
+      new THREE.CylinderGeometry(.62,.62,.35,12),
+      tires
     );
-
-    wheel.rotation.z = Math.PI / 2;
-    wheel.position.set(x, 0.65, z);
+    wheel.rotation.z=Math.PI/2;
+    wheel.position.set(x,.65,z);
     car.add(wheel);
     wheels.push(wheel);
 
-    const rim = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.3, 0.3, 0.37, 16),
-      rimMat
+    const rim=new THREE.Mesh(
+      new THREE.CylinderGeometry(.3,.3,.37,12),
+      rims
     );
-    rim.rotation.z = Math.PI / 2;
+    rim.rotation.z=Math.PI/2;
     rim.position.copy(wheel.position);
     car.add(rim);
   }
 }
 
-// Headlights
-for (const x of [-1, 1]) {
-  const headlight = new THREE.Mesh(
-    new THREE.BoxGeometry(0.65, 0.3, 0.12),
-    new THREE.MeshBasicMaterial({ color: 0xffffff })
-  );
-  headlight.position.set(x, 1.35, -3.12);
-  car.add(headlight);
+for(const x of [-1,1]){
+  addBox(car,x,1.35,-3.12,.65,.3,.12,
+    new THREE.MeshBasicMaterial({color:0xffffff}));
 }
 
-// Starting position
-car.position.set(0, 0, 0);
+car.position.set(0,0,0);
 
-// VEHICLE PHYSICS
+// ==========================================
+// GAME STATE
+// ==========================================
 
-let speed = 0;
-let steering = 0;
-let heading = 0;
+let speed=0;
+let heading=0;
+let steering=0;
 
-const keys = {};
+let started=false;
+let paused=false;
+let lightsOn=false;
+let sirenOn=false;
+let alternateCamera=false;
 
-let started = false;
-let paused = false;
-let lightsOn = false;
-let sirenOn = false;
-let alternateCamera = false;
+const keys={};
+const clock=new THREE.Clock();
 
-const clock = new THREE.Clock();
+window.addEventListener('keydown',e=>{
+  keys[e.code]=true;
 
-window.addEventListener('keydown', e => {
-  keys[e.code] = true;
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)){
+    e.preventDefault();
+  }
 
-  if ([
-    'ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'
-  ].includes(e.code)) e.preventDefault();
+  if(e.repeat)return;
 
-  if (e.repeat) return;
-
-  if (e.code === 'KeyL') toggleLights();
-  if (e.code === 'KeyE') toggleSiren();
-  if (e.code === 'KeyC') alternateCamera = !alternateCamera;
-  if (e.code === 'Escape' && started) togglePause();
+  if(e.code==='KeyJ')toggleLights();
+  if(e.code==='KeyR')toggleSiren();
+  if(e.code==='KeyC')alternateCamera=!alternateCamera;
+  if(e.code==='Escape'&&started)togglePause();
 });
 
-window.addEventListener('keyup', e => {
-  keys[e.code] = false;
+window.addEventListener('keyup',e=>{
+  keys[e.code]=false;
 });
 
-function toggleLights() {
-  lightsOn = !lightsOn;
+// ==========================================
+// EMERGENCY LIGHTS
+// ==========================================
 
-  document.getElementById('lightStatus').textContent =
-    'EMERGENCY LIGHTS: ' + (lightsOn ? 'ON' : 'OFF');
+function toggleLights(){
+  lightsOn=!lightsOn;
 
-  showMessage(lightsOn ? 'EMERGENCY LIGHTS ACTIVATED' : 'EMERGENCY LIGHTS DEACTIVATED');
+  document.getElementById('lightStatus').textContent=
+    'ELS: '+(lightsOn?'ON':'OFF');
+
+  showMessage(lightsOn?'EMERGENCY LIGHTS ON':'EMERGENCY LIGHTS OFF');
 }
 
-function toggleSiren() {
-  sirenOn = !sirenOn;
-  showMessage(sirenOn ? 'SIREN ACTIVATED' : 'SIREN DEACTIVATED');
+function updateLights(){
+  if(!lightsOn){
+    redLight.material=offMaterial;
+    blueLight.material=offMaterial;
+    return;
+  }
 
-  if (sirenOn) startSiren();
-  else stopSiren();
+  const flash=Math.floor(performance.now()/160)%2===0;
+
+  redLight.material=flash?redMaterial:offMaterial;
+  blueLight.material=flash?offMaterial:blueMaterial;
 }
 
-// SIREN AUDIO
+// ==========================================
+// SIREN
+// ==========================================
 
-let audioContext = null;
-let sirenOscillator = null;
-let sirenGain = null;
-let sirenInterval = null;
-let sirenTone = false;
+let audioContext=null;
+let oscillator=null;
+let gain=null;
+let sirenInterval=null;
+let sirenTone=false;
 
-function startSiren() {
-  if (!audioContext) {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+function startSiren(){
+  if(!audioContext){
+    audioContext=new(window.AudioContext||window.webkitAudioContext)();
   }
 
   audioContext.resume();
 
-  if (sirenOscillator) return;
+  if(oscillator)return;
 
-  sirenOscillator = audioContext.createOscillator();
-  sirenGain = audioContext.createGain();
+  oscillator=audioContext.createOscillator();
+  gain=audioContext.createGain();
 
-  sirenOscillator.type = 'sawtooth';
-  sirenOscillator.frequency.value = 650;
-  sirenGain.gain.value = 0.035;
+  oscillator.type='sawtooth';
+  oscillator.frequency.value=650;
+  gain.gain.value=.025;
 
-  sirenOscillator.connect(sirenGain);
-  sirenGain.connect(audioContext.destination);
-  sirenOscillator.start();
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start();
 
-  sirenInterval = setInterval(() => {
-    sirenTone = !sirenTone;
-    sirenOscillator.frequency.setTargetAtTime(
-      sirenTone ? 900 : 600,
-      audioContext.currentTime,
-      0.08
+  sirenInterval=setInterval(()=>{
+    if(!oscillator)return;
+
+    sirenTone=!sirenTone;
+
+    oscillator.frequency.setTargetAtTime(
+      sirenTone?900:600,
+      audioContext.currentTime,.08
     );
-  }, 450);
+  },450);
 }
 
-function stopSiren() {
-  if (sirenOscillator) {
-    sirenOscillator.stop();
-    sirenOscillator.disconnect();
-    sirenGain.disconnect();
-    sirenOscillator = null;
-    sirenGain = null;
+function stopSiren(){
+  if(oscillator){
+    oscillator.stop();
+    oscillator.disconnect();
+    gain.disconnect();
+    oscillator=null;
+    gain=null;
   }
 
-  if (sirenInterval) clearInterval(sirenInterval);
-  sirenInterval = null;
+  clearInterval(sirenInterval);
+  sirenInterval=null;
 }
 
-// MESSAGE SYSTEM
+function toggleSiren(){
+  sirenOn=!sirenOn;
+
+  if(sirenOn)startSiren();
+  else stopSiren();
+
+  document.getElementById('sirenStatus').textContent=
+    'SIREN: '+(sirenOn?'ON':'OFF');
+
+  showMessage(sirenOn?'SIREN ACTIVATED':'SIREN DEACTIVATED');
+}
+
+// ==========================================
+// MESSAGE
+// ==========================================
 
 let messageTimeout;
 
-function showMessage(text) {
-  const el = document.getElementById('message');
-  el.textContent = text;
-  el.style.opacity = 1;
+function showMessage(text){
+  const el=document.getElementById('message');
+  el.textContent=text;
+  el.style.opacity=1;
 
   clearTimeout(messageTimeout);
 
-  messageTimeout = setTimeout(() => {
-    el.style.opacity = 0;
-  }, 1800);
+  messageTimeout=setTimeout(()=>{
+    el.style.opacity=0;
+  },1800);
 }
 
+// ==========================================
 // COLLISION
+// ==========================================
 
-function hitsBuilding(x, z) {
-  for (const b of buildings) {
-    if (
-      x + 2.2 > b.minX &&
-      x - 2.2 < b.maxX &&
-      z + 3.5 > b.minZ &&
-      z - 3.5 < b.maxZ
-    ) return true;
+function hitsBuilding(x,z){
+  for(const b of buildings){
+    if(
+      x+2.2>b.minX &&
+      x-2.2<b.maxX &&
+      z+3.5>b.minZ &&
+      z-3.5<b.maxZ
+    )return true;
   }
   return false;
 }
 
-// CAMERA
+// ==========================================
+// GTA-STYLE CHASE CAMERA
+// ==========================================
 
-const cameraTarget = new THREE.Vector3();
+const cameraTarget=new THREE.Vector3();
+const cameraDesired=new THREE.Vector3();
+const lookTarget=new THREE.Vector3();
 
-function updateCamera(dt) {
-  const distance = alternateCamera ? 11 : 17;
-  const height = alternateCamera ? 4 : 7;
+function updateCamera(dt){
 
-  const offset = new THREE.Vector3(
-    0,
-    height,
-    distance
+  const distance=alternateCamera?9:15;
+  const height=alternateCamera?3.5:5.8;
+
+  // Position behind the direction the car is facing.
+  const offset=new THREE.Vector3(0,height,distance);
+  offset.applyAxisAngle(new THREE.Vector3(0,1,0),heading);
+
+  cameraDesired.copy(car.position).add(offset);
+
+  // Smooth chase-camera movement.
+  const follow=1-Math.exp(-5*dt);
+  camera.position.lerp(cameraDesired,follow);
+
+  // Look slightly ahead of the vehicle.
+  lookTarget.set(
+    car.position.x-Math.sin(heading)*9,
+    car.position.y+1.4,
+    car.position.z-Math.cos(heading)*9
   );
 
-  offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), heading);
-
-  const desired = car.position.clone().add(offset);
-
-  camera.position.lerp(
-    desired,
-    1 - Math.pow(0.001, dt)
-  );
-
-  cameraTarget.copy(car.position);
-  cameraTarget.y += alternateCamera ? 2 : 1.4;
-
+  cameraTarget.lerp(lookTarget,1-Math.exp(-7*dt));
   camera.lookAt(cameraTarget);
 }
 
-// GAME UPDATE
+// ==========================================
+// VEHICLE PHYSICS
+// ==========================================
 
-function update(dt) {
-  if (!started || paused) return;
+function update(dt){
 
-  const forward =
-    keys['KeyW'] || keys['ArrowUp'];
+  if(!started||paused)return;
 
-  const backward =
-    keys['KeyS'] || keys['ArrowDown'];
-
-  const left =
-    keys['KeyA'] || keys['ArrowLeft'];
-
-  const right =
-    keys['KeyD'] || keys['ArrowRight'];
-
-  const handbrake = keys['Space'];
+  const forward=keys['KeyW']||keys['ArrowUp'];
+  const backward=keys['KeyS']||keys['ArrowDown'];
+  const left=keys['KeyA']||keys['ArrowLeft'];
+  const right=keys['KeyD']||keys['ArrowRight'];
+  const handbrake=keys['Space'];
 
   // Acceleration
-  if (forward) speed += 24 * dt;
-  else if (backward) speed -= 32 * dt;
-  else speed *= Math.pow(0.985, dt * 60);
+  if(forward)speed+=22*dt;
+  else if(backward)speed-=30*dt;
+  else speed*=Math.pow(.985,dt*60);
 
-  // Speed limits
-  speed = THREE.MathUtils.clamp(speed, -13, 48);
+  speed=THREE.MathUtils.clamp(speed,-12,48);
 
-  // Handbrake
-  if (handbrake) {
-    speed *= Math.pow(0.90, dt * 60);
-  }
+  if(handbrake)speed*=Math.pow(.90,dt*60);
 
   // Steering
-  const steerInput = (right ? 1 : 0) - (left ? 1 : 0);
+  const input=(right?1:0)-(left?1:0);
 
-  steering = THREE.MathUtils.damp(
-    steering,
-    steerInput,
-    8,
-    dt
+  steering=THREE.MathUtils.damp(
+    steering,input,7,dt
   );
 
-  if (Math.abs(speed) > 0.4) {
-    heading -= steering * 1.5 * dt * Math.min(Math.abs(speed) / 10, 1.2) * Math.sign(speed);
+  if(Math.abs(speed)>.4){
+    const steeringPower=Math.min(Math.abs(speed)/12,1.3);
+
+    heading-=steering*1.35*dt*
+      steeringPower*Math.sign(speed);
   }
 
-  car.rotation.y = heading;
+  car.rotation.y=heading;
 
   // Movement
-  const oldX = car.position.x;
-  const oldZ = car.position.z;
+  const oldX=car.position.x;
+  const oldZ=car.position.z;
 
-  car.position.x -= Math.sin(heading) * speed * dt;
-  car.position.z -= Math.cos(heading) * speed * dt;
+  car.position.x-=Math.sin(heading)*speed*dt;
+  car.position.z-=Math.cos(heading)*speed*dt;
 
-  // City boundary
-  car.position.x = THREE.MathUtils.clamp(car.position.x, -420, 420);
-  car.position.z = THREE.MathUtils.clamp(car.position.z, -420, 420);
+  car.position.x=THREE.MathUtils.clamp(car.position.x,-420,420);
+  car.position.z=THREE.MathUtils.clamp(car.position.z,-420,420);
 
-  if (hitsBuilding(car.position.x, car.position.z)) {
-    car.position.x = oldX;
-    car.position.z = oldZ;
-    speed *= -0.18;
+  if(hitsBuilding(car.position.x,car.position.z)){
+    car.position.x=oldX;
+    car.position.z=oldZ;
+    speed*=-.15;
   }
 
-  // Wheel animation
-  for (const wheel of wheels) {
-    wheel.rotation.x += speed * dt * 0.7;
+  // Wheels
+  for(const wheel of wheels){
+    wheel.rotation.x+=speed*dt*.7;
   }
 
-  // Emergency light animation
-  if (lightsOn) {
-    const flash = Math.floor(performance.now() / 170) % 2 === 0;
-    redLight.visible = flash;
-    blueLight.visible = !flash;
-  } else {
-    redLight.visible = true;
-    blueLight.visible = true;
-    redLight.material = lightOff;
-    blueLight.material = lightOff;
-  }
-
-  if (lightsOn) {
-    redLight.material = redMat;
-    blueLight.material = blueMat;
-  }
-
-  // Speedometer
-  const mph = Math.round(Math.abs(speed) * 2.237);
-
-  document.getElementById('speed').textContent =
-    String(mph).padStart(3, '0');
-
+  updateLights();
   updateCamera(dt);
+
+  document.getElementById('speed').textContent=
+    String(Math.round(Math.abs(speed)*2.237)).padStart(3,'0');
 }
 
+// ==========================================
 // MAIN LOOP
+// ==========================================
 
-function animate() {
+function animate(){
   requestAnimationFrame(animate);
 
-  const dt = Math.min(clock.getDelta(), 0.04);
+  const dt=Math.min(clock.getDelta(),.04);
 
   update(dt);
-
-  renderer.render(scene, camera);
+  renderer.render(scene,camera);
 }
 
-camera.position.set(0, 7, 17);
-camera.lookAt(0, 0, 0);
+camera.position.set(0,6,15);
+camera.lookAt(0,0,0);
 
 animate();
 
-// MENU
+// ==========================================
+// MENU AND PAUSE
+// ==========================================
 
-document.getElementById('startButton').onclick = () => {
-  started = true;
-  paused = false;
+document.getElementById('startButton').onclick=()=>{
+  started=true;
+  paused=false;
 
-  document.getElementById('menu').style.display = 'none';
-  document.getElementById('hud').style.display = 'block';
+  document.getElementById('menu').style.display='none';
+  document.getElementById('hud').style.display='block';
 
   clock.getDelta();
 };
 
-function togglePause() {
-  paused = !paused;
+function togglePause(){
+  paused=!paused;
 
-  document.getElementById('pauseScreen').style.display =
-    paused ? 'flex' : 'none';
-
-  if (paused) stopSiren();
-  else if (sirenOn) startSiren();
+  document.getElementById('pauseScreen').style.display=
+    paused?'flex':'none';
 }
 
-document.getElementById('resumeButton').onclick = togglePause;
+document.getElementById('resumeButton').onclick=()=>{
+  paused=false;
+  document.getElementById('pauseScreen').style.display='none';
+  clock.getDelta();
+};
 
-document.getElementById('exitButton').onclick = () => {
-  started = false;
-  paused = false;
-  speed = 0;
-  lightsOn = false;
-  sirenOn = false;
+document.getElementById('exitButton').onclick=()=>{
+  started=false;
+  paused=false;
+  speed=0;
+  lightsOn=false;
+  sirenOn=false;
 
   stopSiren();
 
-  document.getElementById('pauseScreen').style.display = 'none';
-  document.getElementById('hud').style.display = 'none';
-  document.getElementById('menu').style.display = 'flex';
+  document.getElementById('pauseScreen').style.display='none';
+  document.getElementById('hud').style.display='none';
+  document.getElementById('menu').style.display='flex';
 };
 
-// RESIZE
-
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
+window.addEventListener('resize',()=>{
+  camera.aspect=window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
 
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setSize(window.innerWidth,window.innerHeight);
 });
 </script>
 </body>
