@@ -28,7 +28,7 @@ button:hover{background:#45aaff}
 .bottom-right{position:absolute;bottom:25px;right:25px;background:#0a1523dd;padding:14px 18px;font-size:11px;line-height:2;text-align:right;color:#d5e1ed}
 .key{color:#58b9ff;font-weight:bold}
 #message{position:absolute;top:100px;left:50%;transform:translateX(-50%);background:#091727dd;padding:12px 25px;font-size:12px;letter-spacing:2px;opacity:0;transition:opacity .2s}
-#pauseScreen{display:none;position:fixed;inset:0;z-index:9;background:#050b14eF;align-items:center;justify-content:center;text-align:center}
+#pauseScreen{display:none;position:fixed;inset:0;z-index:9;background:#050b14ef;align-items:center;justify-content:center;text-align:center}
 #pauseScreen h1{font-size:48px;letter-spacing:4px}
 @media(max-width:600px){.bottom-right{font-size:9px;padding:8px}.bottom-left{padding:10px}#speed{font-size:32px}}
 </style>
@@ -50,7 +50,7 @@ button:hover{background:#45aaff}
       Get behind the wheel and take control.
     </p>
     <button id="startButton">START PATROL →</button>
-    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.2 | PERFORMANCE UPDATE</p>
+    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.3 | CAMERA UPDATE</p>
   </div>
 </div>
 
@@ -98,22 +98,21 @@ button:hover{background:#45aaff}
 import * as THREE from 'three';
 
 // ==========================================
-// PERFORMANCE SETTINGS
+// RENDERER
 // ==========================================
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x91b5d0);
-scene.fog = new THREE.Fog(0x91b5d0,180,600);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x91b5d0);
+scene.fog=new THREE.Fog(0x91b5d0,180,600);
 
-const camera = new THREE.PerspectiveCamera(
-  65,window.innerWidth/window.innerHeight,0.1,900
+const camera=new THREE.PerspectiveCamera(
+  65,window.innerWidth/window.innerHeight,.1,900
 );
 
-const renderer = new THREE.WebGLRenderer({
+const renderer=new THREE.WebGLRenderer({
   antialias:false,
   powerPreference:"high-performance",
-  stencil:false,
-  depth:true
+  stencil:false
 });
 
 renderer.setSize(window.innerWidth,window.innerHeight);
@@ -144,11 +143,6 @@ const material=color=>new THREE.MeshStandardMaterial({
 const grass=material(0x56764b);
 const road=material(0x30353a);
 const sidewalk=material(0x92979a);
-const roadLine=material(0xd8d3b7);
-
-// ==========================================
-// WORLD
-// ==========================================
 
 function addBox(parent,x,y,z,sx,sy,sz,mat){
   const mesh=new THREE.Mesh(
@@ -159,9 +153,12 @@ function addBox(parent,x,y,z,sx,sy,sz,mat){
   return mesh;
 }
 
-addBox(scene,0,-0.6,0,900,1,900,grass);
+// ==========================================
+// WORLD
+// ==========================================
 
-// Roads
+addBox(scene,0,-.6,0,900,1,900,grass);
+
 const spacing=120;
 const roadWidth=27;
 
@@ -177,12 +174,13 @@ for(let i=-4;i<=4;i++){
   }
 }
 
-// Road markings: InstancedMesh keeps draw calls low.
+// Instanced road markings
+
 const dashGeo=new THREE.BoxGeometry(.22,.04,7);
 const dashMat=new THREE.MeshBasicMaterial({color:0xe6dfb8});
-const dashCount=9*18*2;
-const dashes=new THREE.InstancedMesh(dashGeo,dashMat,dashCount);
+const dashes=new THREE.InstancedMesh(dashGeo,dashMat,306);
 const dummy=new THREE.Object3D();
+
 let dashIndex=0;
 
 for(let i=-4;i<=4;i++){
@@ -208,21 +206,15 @@ dashes.instanceMatrix.needsUpdate=true;
 scene.add(dashes);
 
 // ==========================================
-// BUILDINGS: INSTANCED RENDERING
+// BUILDINGS
 // ==========================================
 
 const buildingGeo=new THREE.BoxGeometry(1,1,1);
-
-const buildingMat=new THREE.MeshStandardMaterial({
-  color:0xffffff,
-  roughness:1
-});
+const buildingMat=new THREE.MeshStandardMaterial({color:0xffffff});
 
 const buildingMesh=new THREE.InstancedMesh(
   buildingGeo,buildingMat,150
 );
-
-buildingMesh.instanceMatrix.setUsage(THREE.StaticDrawUsage);
 
 const buildingColors=[
   0x999991,0x858e98,0xc0b6a6,
@@ -279,7 +271,7 @@ buildingMesh.instanceColor.needsUpdate=true;
 scene.add(buildingMesh);
 
 // ==========================================
-// POLICE VEHICLE
+// POLICE CAR
 // ==========================================
 
 const car=new THREE.Group();
@@ -300,38 +292,34 @@ addBox(car,0,2.8,.2,2.5,.15,3.2,white);
 
 addBox(car,0,.85,-3.15,3.2,.3,.25,black);
 addBox(car,0,.85,3.15,3.2,.3,.25,black);
-
-// Door stripe
 addBox(car,0,1.35,-.4,3.18,.48,.12,black);
 
-// Lightbar
 addBox(car,0,2.93,.2,1.9,.17,.5,black);
 
 const redMaterial=new THREE.MeshBasicMaterial({color:0xff142b});
 const blueMaterial=new THREE.MeshBasicMaterial({color:0x087dff});
+const offMaterial=new THREE.MeshBasicMaterial({color:0x171c22});
 
 const redLight=addBox(car,-.55,3.05,.2,.7,.18,.35,redMaterial);
 const blueLight=addBox(car,.55,3.05,.2,.7,.18,.35,blueMaterial);
-
-const offMaterial=new THREE.MeshBasicMaterial({color:0x171c22});
 
 const wheels=[];
 
 for(const x of [-1.58,1.58]){
   for(const z of [-2,2]){
     const wheel=new THREE.Mesh(
-      new THREE.CylinderGeometry(.62,.62,.35,12),
-      tires
+      new THREE.CylinderGeometry(.62,.62,.35,12),tires
     );
+
     wheel.rotation.z=Math.PI/2;
     wheel.position.set(x,.65,z);
     car.add(wheel);
     wheels.push(wheel);
 
     const rim=new THREE.Mesh(
-      new THREE.CylinderGeometry(.3,.3,.37,12),
-      rims
+      new THREE.CylinderGeometry(.3,.3,.37,12),rims
     );
+
     rim.rotation.z=Math.PI/2;
     rim.position.copy(wheel.position);
     car.add(rim);
@@ -382,7 +370,7 @@ window.addEventListener('keyup',e=>{
 });
 
 // ==========================================
-// EMERGENCY LIGHTS
+// ELS
 // ==========================================
 
 function toggleLights(){
@@ -475,7 +463,7 @@ function toggleSiren(){
 }
 
 // ==========================================
-// MESSAGE
+// MESSAGES
 // ==========================================
 
 let messageTimeout;
@@ -505,11 +493,12 @@ function hitsBuilding(x,z){
       z-3.5<b.maxZ
     )return true;
   }
+
   return false;
 }
 
 // ==========================================
-// GTA-STYLE CHASE CAMERA
+// GTA-STYLE FIXED CAMERA
 // ==========================================
 
 const cameraTarget=new THREE.Vector3();
@@ -518,32 +507,40 @@ const lookTarget=new THREE.Vector3();
 
 function updateCamera(dt){
 
-  const distance=alternateCamera?9:15;
-  const height=alternateCamera?3.5:5.8;
+  // Fixed distance. No speed-based zoom.
+  const distance=9;
+  const height=3.8;
 
-  // Position behind the direction the car is facing.
   const offset=new THREE.Vector3(0,height,distance);
-  offset.applyAxisAngle(new THREE.Vector3(0,1,0),heading);
+
+  offset.applyAxisAngle(
+    new THREE.Vector3(0,1,0),
+    heading
+  );
 
   cameraDesired.copy(car.position).add(offset);
 
-  // Smooth chase-camera movement.
-  const follow=1-Math.exp(-5*dt);
+  // Smooth following
+  const follow=1-Math.exp(-7*dt);
   camera.position.lerp(cameraDesired,follow);
 
-  // Look slightly ahead of the vehicle.
+  // Look slightly ahead of the car
   lookTarget.set(
-    car.position.x-Math.sin(heading)*9,
-    car.position.y+1.4,
-    car.position.z-Math.cos(heading)*9
+    car.position.x-Math.sin(heading)*5,
+    car.position.y+1.5,
+    car.position.z-Math.cos(heading)*5
   );
 
-  cameraTarget.lerp(lookTarget,1-Math.exp(-7*dt));
+  cameraTarget.lerp(
+    lookTarget,
+    1-Math.exp(-8*dt)
+  );
+
   camera.lookAt(cameraTarget);
 }
 
 // ==========================================
-// VEHICLE PHYSICS
+// DRIVING
 // ==========================================
 
 function update(dt){
@@ -556,7 +553,6 @@ function update(dt){
   const right=keys['KeyD']||keys['ArrowRight'];
   const handbrake=keys['Space'];
 
-  // Acceleration
   if(forward)speed+=22*dt;
   else if(backward)speed-=30*dt;
   else speed*=Math.pow(.985,dt*60);
@@ -565,23 +561,17 @@ function update(dt){
 
   if(handbrake)speed*=Math.pow(.90,dt*60);
 
-  // Steering
   const input=(right?1:0)-(left?1:0);
 
-  steering=THREE.MathUtils.damp(
-    steering,input,7,dt
-  );
+  steering=THREE.MathUtils.damp(steering,input,7,dt);
 
   if(Math.abs(speed)>.4){
-    const steeringPower=Math.min(Math.abs(speed)/12,1.3);
-
     heading-=steering*1.35*dt*
-      steeringPower*Math.sign(speed);
+      Math.min(Math.abs(speed)/12,1.3)*Math.sign(speed);
   }
 
   car.rotation.y=heading;
 
-  // Movement
   const oldX=car.position.x;
   const oldZ=car.position.z;
 
@@ -597,7 +587,6 @@ function update(dt){
     speed*=-.15;
   }
 
-  // Wheels
   for(const wheel of wheels){
     wheel.rotation.x+=speed*dt*.7;
   }
@@ -622,13 +611,13 @@ function animate(){
   renderer.render(scene,camera);
 }
 
-camera.position.set(0,6,15);
-camera.lookAt(0,0,0);
+camera.position.set(0,4,9);
+camera.lookAt(0,1.5,-5);
 
 animate();
 
 // ==========================================
-// MENU AND PAUSE
+// MENU
 // ==========================================
 
 document.getElementById('startButton').onclick=()=>{
@@ -638,6 +627,8 @@ document.getElementById('startButton').onclick=()=>{
   document.getElementById('menu').style.display='none';
   document.getElementById('hud').style.display='block';
 
+  camera.position.set(0,4,9);
+  cameraTarget.set(0,1.5,-5);
   clock.getDelta();
 };
 
@@ -663,10 +654,17 @@ document.getElementById('exitButton').onclick=()=>{
 
   stopSiren();
 
+  document.getElementById('lightStatus').textContent='ELS: OFF';
+  document.getElementById('sirenStatus').textContent='SIREN: OFF';
+
   document.getElementById('pauseScreen').style.display='none';
   document.getElementById('hud').style.display='none';
   document.getElementById('menu').style.display='flex';
 };
+
+// ==========================================
+// RESIZE
+// ==========================================
 
 window.addEventListener('resize',()=>{
   camera.aspect=window.innerWidth/window.innerHeight;
