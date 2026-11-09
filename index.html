@@ -54,7 +54,7 @@ button:hover{background:#45aaff}
       Get behind the wheel and take control.
     </p>
     <button id="startButton">START PATROL →</button>
-    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.7 | SEDAN & CAMERA UPDATE</p>
+    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.8 | WINDOW FIX</p>
   </div>
 </div>
 
@@ -260,10 +260,8 @@ let buildingIndex = 0;
 
 for(let gx=-3;gx<=3;gx++){
   for(let gz=-3;gz<=3;gz++){
-
     const centerX = gx*spacing+60;
     const centerZ = gz*spacing+60;
-
     const count = 2+Math.floor(Math.random()*2);
 
     for(let n=0;n<count;n++){
@@ -314,18 +312,21 @@ scene.add(car);
 const white = material(0xe9edf0,.45);
 const whiteDark = material(0xcbd2d8,.6);
 const black = material(0x101820,.65);
-const glass = material(0x18384d,.25);
-const glassHighlight = material(0x42677d,.35);
+const glass = new THREE.MeshBasicMaterial({
+  color:0x102c40,
+  side:THREE.DoubleSide
+});
 const tires = material(0x101113);
 const rims = material(0x9da8b2,.35);
 const chrome = material(0xc4cbd0,.3);
 const blue = material(0x0755a7,.5);
 const darkBlue = material(0x092c50,.5);
+
 const redLens = new THREE.MeshBasicMaterial({color:0xff2525});
 const clearLens = new THREE.MeshBasicMaterial({color:0xeaf5ff});
 const amberLens = new THREE.MeshBasicMaterial({color:0xffa323});
 
-// Main lower body, hood, trunk and bumpers
+// Main lower body
 
 addBox(car,0,1.03,0,3.05,.88,6.15,white);
 addBox(car,0,1.39,-2.05,2.98,.35,1.8,white);
@@ -343,97 +344,22 @@ addBox(car,0,1.60,-2.05,2.7,.035,1.4,whiteDark);
 addBox(car,0,1.57,2.35,2.65,.035,.95,whiteDark);
 
 // ==========================================
-// SHAPED CABIN
+// CABIN - DARK GLASS, OPEN WINDOW AREAS
 // ==========================================
 
-// The cabin is a custom trapezoid-shaped sedan roof section.
-// Front of vehicle points toward negative Z.
+// IMPORTANT: There is deliberately NO solid cabin shell here.
+// The glass panels are individual polygons, so white body geometry
+// cannot cover the windows.
 
-const cabinPoints = [
-  [-1.18,1.48,-1.48],
-  [ 1.18,1.48,-1.48],
-  [ 1.18,1.48, 1.48],
-  [-1.18,1.48, 1.48],
-  [-.98,2.52,-.76],
-  [ .98,2.52,-.76],
-  [ .98,2.52, .82],
-  [-.98,2.52, .82]
-];
+// Roof
+addBox(car,0,2.55,.02,2.02,.13,1.78,white);
 
-const cabinFaces = [
-  [0,1,5],[0,5,4],
-  [1,2,6],[1,6,5],
-  [2,3,7],[2,7,6],
-  [3,0,4],[3,4,7],
-  [4,5,6],[4,6,7],
-  [0,3,2],[0,2,1]
-];
-
-const cabinVertices = [];
-for(const face of cabinFaces){
-  for(const index of face){
-    cabinVertices.push(...cabinPoints[index]);
-  }
-}
-
-const cabinGeo = new THREE.BufferGeometry();
-cabinGeo.setAttribute(
-  'position',
-  new THREE.Float32BufferAttribute(cabinVertices,3)
-);
-cabinGeo.computeVertexNormals();
-
-const cabinMesh = new THREE.Mesh(
-  cabinGeo,
-  new THREE.MeshStandardMaterial({
-    color:0xe8edf0,
-    roughness:.5,
-    side:THREE.DoubleSide
-  })
-);
-car.add(cabinMesh);
-
-// Dark side windows, divided into front and rear sections
-
-const sideWindowMat = new THREE.MeshStandardMaterial({
-  color:0x17364a,
-  roughness:.25,
-  metalness:.15,
-  side:THREE.DoubleSide
-});
-
+// Roof edge trim
 for(const side of [-1,1]){
-  const x = side*1.195;
-
-  // Front side window
-  addPolygon(car,[
-    [x,1.68,-1.31],
-    [x,1.68,-.80],
-    [x,2.40,-.64],
-    [x,2.40,-.64]
-  ],sideWindowMat);
-
-  // Rear side window
-  addPolygon(car,[
-    [x,1.68,-.62],
-    [x,1.68,1.28],
-    [x,2.40,.69],
-    [x,2.40,.69]
-  ],sideWindowMat);
-
-  // Side window divider
-  addBox(car,x,2.02,-.68,.065,.78,.075,whiteDark);
-
-  // Window lower trim
-  addBox(car,side*1.205,1.64,-.05,.045,.065,2.65,chrome);
-
-  // Door pillars
-  addBox(car,side*1.20,2.02,-.77,.075,.88,.09,white);
-  addBox(car,side*1.20,2.02,.78,.075,.88,.09,white);
+  addBox(car,side*1.02,2.50,.02,.055,.08,1.72,whiteDark);
 }
 
-// Front windshield: sloped glass panel
-
+// Front windshield
 addPolygon(car,[
   [-1.06,1.62,-1.51],
   [ 1.06,1.62,-1.51],
@@ -442,7 +368,6 @@ addPolygon(car,[
 ],glass);
 
 // Rear windshield
-
 addPolygon(car,[
   [-.94,2.42,.87],
   [ .94,2.42,.87],
@@ -450,51 +375,65 @@ addPolygon(car,[
   [-1.08,1.62,1.53]
 ],glass);
 
-// Roof
-
-addBox(car,0,2.55,.02,2.02,.13,1.78,white);
-
-// Roof edge trim
-
+// Side windows and pillars
 for(const side of [-1,1]){
-  addBox(car,side*1.02,2.50,.02,.055,.08,1.72,whiteDark);
+  const x = side*1.205;
+
+  // Front side window
+  addPolygon(car,[
+    [x,1.70,-1.30],
+    [x,1.70,-.78],
+    [x,2.38,-.66],
+    [x,2.38,-.84]
+  ],glass);
+
+  // Rear side window
+  addPolygon(car,[
+    [x,1.70,-.68],
+    [x,1.70,1.28],
+    [x,2.38,.72],
+    [x,2.38,-.60]
+  ],glass);
+
+  // Window divider
+  addBox(car,x,2.02,-.68,.065,.75,.075,white);
+
+  // Lower window trim
+  addBox(car,side*1.21,1.65,-.05,.045,.055,2.65,chrome);
+
+  // Front and rear window pillars
+  addBox(car,side*1.20,2.02,-1.27,.075,.85,.09,white);
+  addBox(car,side*1.20,2.02,.90,.075,.85,.09,white);
+
+  // Side mirror
+  addBox(car,side*1.30,1.85,-1.25,.24,.12,.25,black);
+  addBox(car,side*1.43,1.91,-1.30,.22,.17,.3,white);
 }
 
-// Rear deck and front cowl
-
-addBox(car,0,1.66,1.48,2.1,.12,.18,white);
+// Front cowl and rear deck
 addBox(car,0,1.66,-1.50,2.1,.12,.18,white);
+addBox(car,0,1.66,1.48,2.1,.12,.18,white);
 
 // ==========================================
 // POLICE DOOR MARKINGS
 // ==========================================
 
 for(const side of [-1,1]){
-  // Blue stripe along the doors
   addBox(car,side*1.535,1.28,.15,.035,.25,2.75,blue);
-
-  // Lower blue rocker stripe
   addBox(car,side*1.54,.88,.1,.035,.08,2.7,darkBlue);
 
-  // Door seams
   for(const z of [-.75,.9]){
     addBox(car,side*1.54,1.25,z,.025,.72,.025,whiteDark);
   }
 
-  // Door handles
   for(const z of [-.25,1.05]){
     addBox(car,side*1.56,1.53,z,.035,.055,.25,chrome);
   }
 
-  // Side mirror mounts and mirrors
-  addBox(car,side*1.30,1.85,-1.25,.24,.12,.25,black);
-  addBox(car,side*1.43,1.91,-1.30,.22,.17,.3,white);
-
-  // Fender marker
   addBox(car,side*1.54,1.35,-2.55,.035,.12,.28,amberLens);
 }
 
-// Police text decals using canvas textures
+// Police text decals
 
 function makeTextTexture(text,color){
   const canvas = document.createElement('canvas');
@@ -547,27 +486,17 @@ for(const side of [-1,1]){
 // FRONT GRILLE AND LIGHTS
 // ==========================================
 
-// Grille frame
-
 addBox(car,0,1.12,-3.19,1.35,.48,.08,chrome);
 addBox(car,0,1.12,-3.245,1.22,.36,.04,black);
-
-// Grille bars
 
 for(let i=0;i<5;i++){
   addBox(car,0,.97+i*.075,-3.275,1.12,.025,.025,chrome);
 }
 
-// Headlights
-
 for(const x of [-1,1]){
   addBox(car,x,1.43,-3.18,.65,.32,.09,chrome);
   addBox(car,x,1.44,-3.24,.54,.23,.035,clearLens);
-
-  // Amber turn signal
   addBox(car,x*1.37,1.40,-3.13,.16,.22,.06,amberLens);
-
-  // Fog lights
   addBox(car,x*.82,.91,-3.20,.27,.13,.06,clearLens);
 }
 
@@ -584,8 +513,6 @@ for(const x of [-1,1]){
   addBox(car,x,1.42,3.21,.18,.19,.04,clearLens);
 }
 
-// Rear license plate
-
 addBox(car,0,1.15,3.20,.72,.24,.035,whiteDark);
 addBox(car,0,1.15,3.225,.54,.14,.025,black);
 
@@ -597,23 +524,13 @@ const wheels = [];
 
 for(const x of [-1.57,1.57]){
   for(const z of [-2.05,2.05]){
-
-    // Tire
     const wheel = addCylinder(car,x,.66,z,.62,.36,tires,32);
-    wheel.rotation.z = Math.PI/2;
     wheels.push(wheel);
 
-    // Outer rim
-    const rim = addCylinder(car,x+Math.sign(x)*.015,.66,z,.39,.38,rims,24);
-    rim.rotation.z = Math.PI/2;
-
-    // Inner rim
+    addCylinder(car,x+Math.sign(x)*.015,.66,z,.39,.38,rims,24);
     addCylinder(car,x+Math.sign(x)*.03,.66,z,.25,.39,black,24);
-
-    // Center hub
     addCylinder(car,x+Math.sign(x)*.045,.66,z,.105,.41,chrome,16);
 
-    // Spokes
     for(let i=0;i<8;i++){
       const angle = i*Math.PI/4;
       const spoke = addBox(
@@ -627,7 +544,6 @@ for(const x of [-1.57,1.57]){
       spoke.rotation.x = angle;
     }
 
-    // Wheel arch trim
     const arch = new THREE.Mesh(
       new THREE.TorusGeometry(.69,.045,6,28,Math.PI),
       black
@@ -655,12 +571,11 @@ const offMaterial = new THREE.MeshBasicMaterial({color:0x171c22});
 const lightSegments = [];
 
 for(let i=0;i<6;i++){
-  const x = -0.86+i*.344;
+  const x = -.86+i*.344;
   const isRed = i<3;
 
   const segment = addBox(
-    lightbar,x,.105,0,.29,.16,.34,
-    offMaterial
+    lightbar,x,.105,0,.29,.16,.34,offMaterial
   );
 
   lightSegments.push({
@@ -669,8 +584,6 @@ for(let i=0;i<6;i++){
     side:isRed?'red':'blue'
   });
 }
-
-// Lightbar end caps
 
 addBox(lightbar,-1.08,.08,0,.10,.14,.43,chrome);
 addBox(lightbar,1.08,.08,0,.10,.14,.43,chrome);
@@ -728,11 +641,6 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('keyup',e=>{
   keys[e.code] = false;
 });
-
-function updateCameraStatus(){
-  document.getElementById('cameraStatus').textContent =
-    'CAMERA: '+(cameraMode===0?'CHASE':'HOOD')+' (C)';
-}
 
 // ==========================================
 // EMERGENCY LIGHTS
@@ -965,12 +873,10 @@ function hitsBuilding(x,z){
 // FIXED CAMERA SYSTEM
 // ==========================================
 
-// Both cameras are locked directly to the car.
-// There is no camera lerping, speed zoom, or trailing.
-
 const cameraOffset = new THREE.Vector3();
 const cameraLookTarget = new THREE.Vector3();
 const cameraForward = new THREE.Vector3(0,0,-1);
+const worldUp = new THREE.Vector3(0,1,0);
 
 function updateCamera(){
   cameraForward.set(
@@ -980,12 +886,9 @@ function updateCamera(){
   );
 
   if(cameraMode===0){
-    // Chase camera: fixed distance behind the car
+    // Fixed chase camera
     cameraOffset.set(0,3.8,9);
-    cameraOffset.applyAxisAngle(
-      new THREE.Vector3(0,1,0),
-      heading
-    );
+    cameraOffset.applyAxisAngle(worldUp,heading);
 
     camera.position.copy(car.position).add(cameraOffset);
 
@@ -994,12 +897,9 @@ function updateCamera(){
 
     cameraLookTarget.y += 1.0;
   }else{
-    // Hood camera: mounted near the front of the vehicle
+    // Fixed hood camera
     cameraOffset.set(0,2.35,-1.25);
-    cameraOffset.applyAxisAngle(
-      new THREE.Vector3(0,1,0),
-      heading
-    );
+    cameraOffset.applyAxisAngle(worldUp,heading);
 
     camera.position.copy(car.position).add(cameraOffset);
 
@@ -1010,6 +910,11 @@ function updateCamera(){
   }
 
   camera.lookAt(cameraLookTarget);
+}
+
+function updateCameraStatus(){
+  document.getElementById('cameraStatus').textContent =
+    'CAMERA: '+(cameraMode===0?'CHASE':'HOOD')+' (C)';
 }
 
 // ==========================================
@@ -1058,7 +963,6 @@ function update(dt){
     speed *= -.15;
   }
 
-  // Wheel rotation
   for(const wheel of wheels){
     wheel.rotation.x += speed*dt*.7;
   }
