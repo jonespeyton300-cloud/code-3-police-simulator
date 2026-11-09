@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CODE 3: Police Simulator</title>
-
 <style>
 *{box-sizing:border-box}
 body{margin:0;overflow:hidden;background:#111923;color:white;font-family:Arial,sans-serif}
@@ -32,12 +31,10 @@ button:hover{background:#45aaff}
 #pauseScreen h1{font-size:48px;letter-spacing:4px}
 @media(max-width:600px){.bottom-right{font-size:9px;padding:8px}.bottom-left{padding:10px}#speed{font-size:32px}}
 </style>
-
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
 </script>
 </head>
-
 <body>
 
 <div id="menu">
@@ -50,7 +47,7 @@ button:hover{background:#45aaff}
       Get behind the wheel and take control.
     </p>
     <button id="startButton">START PATROL →</button>
-    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.4 | CAMERA FIX</p>
+    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.5 | LOCKED CAMERA</p>
   </div>
 </div>
 
@@ -98,9 +95,7 @@ button:hover{background:#45aaff}
 <script type="module">
 import * as THREE from 'three';
 
-// ==========================================
 // RENDERER
-// ==========================================
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x91b5d0);
@@ -120,12 +115,9 @@ renderer.setSize(window.innerWidth,window.innerHeight);
 renderer.setPixelRatio(1);
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.shadowMap.enabled=false;
-
 document.body.appendChild(renderer.domElement);
 
-// ==========================================
 // LIGHTING
-// ==========================================
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x65765a,2));
 
@@ -133,9 +125,7 @@ const sun=new THREE.DirectionalLight(0xffffff,1.5);
 sun.position.set(100,150,80);
 scene.add(sun);
 
-// ==========================================
 // MATERIALS
-// ==========================================
 
 const material=color=>new THREE.MeshStandardMaterial({
   color,roughness:1
@@ -154,9 +144,7 @@ function addBox(parent,x,y,z,sx,sy,sz,mat){
   return mesh;
 }
 
-// ==========================================
 // WORLD
-// ==========================================
 
 addBox(scene,0,-.6,0,900,1,900,grass);
 
@@ -175,7 +163,7 @@ for(let i=-4;i<=4;i++){
   }
 }
 
-// Instanced road markings
+// INSTANCED ROAD MARKINGS
 
 const dashGeo=new THREE.BoxGeometry(.22,.04,7);
 const dashMat=new THREE.MeshBasicMaterial({color:0xe6dfb8});
@@ -206,9 +194,7 @@ dashes.count=dashIndex;
 dashes.instanceMatrix.needsUpdate=true;
 scene.add(dashes);
 
-// ==========================================
 // BUILDINGS
-// ==========================================
 
 const buildingGeo=new THREE.BoxGeometry(1,1,1);
 const buildingMat=new THREE.MeshStandardMaterial({color:0xffffff});
@@ -271,9 +257,7 @@ buildingMesh.instanceMatrix.needsUpdate=true;
 buildingMesh.instanceColor.needsUpdate=true;
 scene.add(buildingMesh);
 
-// ==========================================
 // POLICE CAR
-// ==========================================
 
 const car=new THREE.Group();
 scene.add(car);
@@ -294,7 +278,6 @@ addBox(car,0,2.8,.2,2.5,.15,3.2,white);
 addBox(car,0,.85,-3.15,3.2,.3,.25,black);
 addBox(car,0,.85,3.15,3.2,.3,.25,black);
 addBox(car,0,1.35,-.4,3.18,.48,.12,black);
-
 addBox(car,0,2.93,.2,1.9,.17,.5,black);
 
 const redMaterial=new THREE.MeshBasicMaterial({color:0xff142b});
@@ -334,9 +317,7 @@ for(const x of [-1,1]){
 
 car.position.set(0,0,0);
 
-// ==========================================
 // GAME STATE
-// ==========================================
 
 let speed=0;
 let heading=0;
@@ -346,9 +327,6 @@ let started=false;
 let paused=false;
 let lightsOn=false;
 let sirenOn=false;
-
-// 0 = close chase camera
-// 1 = hood / driver camera
 let cameraMode=0;
 
 const keys={};
@@ -373,6 +351,7 @@ window.addEventListener('keydown',e=>{
       'CAMERA: '+(cameraMode===0?'CHASE':'HOOD');
 
     showMessage(cameraMode===0?'CHASE CAMERA':'HOOD CAMERA');
+    updateCamera();
   }
 
   if(e.code==='Escape'&&started)togglePause();
@@ -382,9 +361,7 @@ window.addEventListener('keyup',e=>{
   keys[e.code]=false;
 });
 
-// ==========================================
-// ELS
-// ==========================================
+// EMERGENCY LIGHTS
 
 function toggleLights(){
   lightsOn=!lightsOn;
@@ -408,9 +385,7 @@ function updateLights(){
   blueLight.material=flash?offMaterial:blueMaterial;
 }
 
-// ==========================================
 // SIREN
-// ==========================================
 
 let audioContext=null;
 let oscillator=null;
@@ -475,9 +450,7 @@ function toggleSiren(){
   showMessage(sirenOn?'SIREN ACTIVATED':'SIREN DEACTIVATED');
 }
 
-// ==========================================
 // MESSAGES
-// ==========================================
 
 let messageTimeout;
 
@@ -493,9 +466,7 @@ function showMessage(text){
   },1800);
 }
 
-// ==========================================
 // COLLISION
-// ==========================================
 
 function hitsBuilding(x,z){
   for(const b of buildings){
@@ -511,82 +482,58 @@ function hitsBuilding(x,z){
 }
 
 // ==========================================
-// CAMERA SYSTEM
+// CAMERA - HARD LOCKED TO THE CAR
 // ==========================================
 
-const cameraTarget=new THREE.Vector3();
-const cameraDesired=new THREE.Vector3();
-const lookTarget=new THREE.Vector3();
 const cameraOffset=new THREE.Vector3();
+const cameraLookTarget=new THREE.Vector3();
 const forwardVector=new THREE.Vector3();
+const upAxis=new THREE.Vector3(0,1,0);
 
-function updateCamera(dt){
+function updateCamera(){
 
-  // CAMERA 1: CLOSE CHASE VIEW
-  // Distance stays at 9. No speed-based zoom.
-  if(cameraMode===0){
-
-    cameraOffset.set(0,3.8,9);
-
-    cameraOffset.applyAxisAngle(
-      new THREE.Vector3(0,1,0),
-      heading
-    );
-
-    cameraDesired.copy(car.position).add(cameraOffset);
-
-    // Aim farther ahead to show more of the road.
-    forwardVector.set(
-      -Math.sin(heading),
-      0,
-      -Math.cos(heading)
-    );
-
-    lookTarget.copy(car.position)
-      .addScaledVector(forwardVector,15);
-
-    lookTarget.y=1.0;
-  }
-
-  // CAMERA 2: HOOD / DRIVER VIEW
-  else{
-
-    cameraOffset.set(0,2.35,-1.25);
-
-    cameraOffset.applyAxisAngle(
-      new THREE.Vector3(0,1,0),
-      heading
-    );
-
-    cameraDesired.copy(car.position).add(cameraOffset);
-
-    forwardVector.set(
-      -Math.sin(heading),
-      0,
-      -Math.cos(heading)
-    );
-
-    lookTarget.copy(car.position)
-      .addScaledVector(forwardVector,32);
-
-    lookTarget.y=1.8;
-  }
-
-  // Smooth camera following. Position never changes with speed.
-  const follow=1-Math.exp(-9*dt);
-  camera.position.lerp(cameraDesired,follow);
-
-  cameraTarget.lerp(
-    lookTarget,
-    1-Math.exp(-10*dt)
+  // Forward direction of the vehicle.
+  forwardVector.set(
+    -Math.sin(heading),
+    0,
+    -Math.cos(heading)
   );
 
-  camera.lookAt(cameraTarget);
+  if(cameraMode===0){
+
+    // CHASE CAMERA
+    // Keep the original distance. Do not interpolate.
+    cameraOffset.set(0,3.8,9);
+    cameraOffset.applyAxisAngle(upAxis,heading);
+
+    // Exact position relative to the vehicle.
+    camera.position.copy(car.position).add(cameraOffset);
+
+    // Aim farther down the road.
+    cameraLookTarget.copy(car.position)
+      .addScaledVector(forwardVector,18);
+
+    cameraLookTarget.y=1.0;
+
+  }else{
+
+    // HOOD CAMERA
+    cameraOffset.set(0,2.35,-1.25);
+    cameraOffset.applyAxisAngle(upAxis,heading);
+
+    camera.position.copy(car.position).add(cameraOffset);
+
+    cameraLookTarget.copy(car.position)
+      .addScaledVector(forwardVector,32);
+
+    cameraLookTarget.y=1.8;
+  }
+
+  // No camera lerp, no camera lag, no speed-based zoom.
+  camera.lookAt(cameraLookTarget);
 }
 
-// ==========================================
 // DRIVING
-// ==========================================
 
 function update(dt){
 
@@ -637,15 +584,15 @@ function update(dt){
   }
 
   updateLights();
-  updateCamera(dt);
+
+  // Camera position is recalculated directly from the car every frame.
+  updateCamera();
 
   document.getElementById('speed').textContent=
     String(Math.round(Math.abs(speed)*2.237)).padStart(3,'0');
 }
 
-// ==========================================
 // MAIN LOOP
-// ==========================================
 
 function animate(){
   requestAnimationFrame(animate);
@@ -656,14 +603,10 @@ function animate(){
   renderer.render(scene,camera);
 }
 
-camera.position.set(0,4,9);
-camera.lookAt(0,1.5,-5);
-
+updateCamera();
 animate();
 
-// ==========================================
 // MENU
-// ==========================================
 
 document.getElementById('startButton').onclick=()=>{
   started=true;
@@ -675,9 +618,7 @@ document.getElementById('startButton').onclick=()=>{
   cameraMode=0;
   document.getElementById('cameraStatus').textContent='CAMERA: CHASE';
 
-  camera.position.set(0,4,9);
-  cameraTarget.set(0,1,-15);
-
+  updateCamera();
   clock.getDelta();
 };
 
@@ -692,6 +633,7 @@ document.getElementById('resumeButton').onclick=()=>{
   paused=false;
   document.getElementById('pauseScreen').style.display='none';
   clock.getDelta();
+  updateCamera();
 };
 
 document.getElementById('exitButton').onclick=()=>{
@@ -711,11 +653,11 @@ document.getElementById('exitButton').onclick=()=>{
   document.getElementById('pauseScreen').style.display='none';
   document.getElementById('hud').style.display='none';
   document.getElementById('menu').style.display='flex';
+
+  updateCamera();
 };
 
-// ==========================================
 // RESIZE
-// ==========================================
 
 window.addEventListener('resize',()=>{
   camera.aspect=window.innerWidth/window.innerHeight;
