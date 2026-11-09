@@ -177,7 +177,7 @@ for(let i=-4;i<=4;i++){
   const p=i*spacing;
 
   addBox(scene,p,0,0,roadWidth,.1,900,road);
-  addBox(scene,0,0,p,900,.1,roadWidth,road);
+  addBox(scene,0,0,p,900,.1,roadWidth);
 
   for(const side of [-1,1]){
     addBox(scene,p+side*16,.1,0,3,.2,900,sidewalk);
@@ -335,7 +335,7 @@ cabinShape.moveTo(-1.95,1.48);
 cabinShape.lineTo(1.95,1.48);
 cabinShape.lineTo(.82,2.58);
 cabinShape.lineTo(-.88,2.58);
-cabinShape.close();
+cabinShape.closePath();
 
 const cabinGeo=new THREE.ExtrudeGeometry(cabinShape,{
   depth:2.48,
