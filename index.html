@@ -27,7 +27,7 @@ button:hover{background:#45aaff}
 .unit{font-size:10px;letter-spacing:2px;color:#a5b7c8}
 .bottom-right{position:absolute;bottom:25px;right:25px;background:#0a1523dd;padding:14px 18px;font-size:11px;line-height:2;text-align:right;color:#d5e1ed}
 .key{color:#58b9ff;font-weight:bold}
-#message{position:absolute;top:100px;left:50%;transform:translateX(-50%);background:#091727dd;padding:12px 25px;font-size:12px;letter-spacing:2px;opacity:0;transition:opacity .2s}
+#message{position:absolute;top:100px;left:50%;transform:translateX(-50%);background:#091727dd;padding:12px 25px;font-size:12px;letter-spacing:2px;opacity:0;transition:opacity .2s;text-align:center;white-space:nowrap}
 #pauseScreen{display:none;position:fixed;inset:0;z-index:9;background:#050b14ef;align-items:center;justify-content:center;text-align:center}
 #pauseScreen h1{font-size:48px;letter-spacing:4px}
 @media(max-width:600px){
@@ -54,7 +54,7 @@ button:hover{background:#45aaff}
       Get behind the wheel and take control.
     </p>
     <button id="startButton">START PATROL →</button>
-    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.8 | WINDOW FIX</p>
+    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.9 | ENTER & EXIT UPDATE</p>
   </div>
 </div>
 
@@ -70,6 +70,7 @@ button:hover{background:#45aaff}
     <div id="sirenStatus" style="margin-top:6px;color:#b4c2d0">SIREN: OFF</div>
     <div id="sirenModeStatus" style="margin-top:6px;color:#8fa8bf">MODE: WAIL (T)</div>
     <div id="cameraStatus" style="margin-top:6px;color:#8fa8bf">CAMERA: CHASE (C)</div>
+    <div id="vehicleStatus" style="margin-top:6px;color:#65c6ff">IN VEHICLE</div>
   </div>
 
   <div id="message">PATROL STARTED</div>
@@ -79,11 +80,12 @@ button:hover{background:#45aaff}
     <div class="unit">MPH</div>
   </div>
 
-  <div class="bottom-right">
+  <div class="bottom-right" id="controls">
     <span class="key">W / ↑</span> ACCELERATE<br>
     <span class="key">S / ↓</span> BRAKE<br>
     <span class="key">A / D</span> STEER<br>
     <span class="key">SPACE</span> HANDBRAKE<br>
+    <span class="key">E</span> EXIT VEHICLE<br>
     <span class="key">J</span> EMERGENCY LIGHTS<br>
     <span class="key">R</span> SIREN ON / OFF<br>
     <span class="key">T</span> CHANGE SIREN TONE<br>
@@ -347,14 +349,9 @@ addBox(car,0,1.57,2.35,2.65,.035,.95,whiteDark);
 // CABIN - DARK GLASS, OPEN WINDOW AREAS
 // ==========================================
 
-// IMPORTANT: There is deliberately NO solid cabin shell here.
-// The glass panels are individual polygons, so white body geometry
-// cannot cover the windows.
-
 // Roof
 addBox(car,0,2.55,.02,2.02,.13,1.78,white);
 
-// Roof edge trim
 for(const side of [-1,1]){
   addBox(car,side*1.02,2.50,.02,.055,.08,1.72,whiteDark);
 }
@@ -379,7 +376,6 @@ addPolygon(car,[
 for(const side of [-1,1]){
   const x = side*1.205;
 
-  // Front side window
   addPolygon(car,[
     [x,1.70,-1.30],
     [x,1.70,-.78],
@@ -387,7 +383,6 @@ for(const side of [-1,1]){
     [x,2.38,-.84]
   ],glass);
 
-  // Rear side window
   addPolygon(car,[
     [x,1.70,-.68],
     [x,1.70,1.28],
@@ -395,17 +390,11 @@ for(const side of [-1,1]){
     [x,2.38,-.60]
   ],glass);
 
-  // Window divider
   addBox(car,x,2.02,-.68,.065,.75,.075,white);
-
-  // Lower window trim
   addBox(car,side*1.21,1.65,-.05,.045,.055,2.65,chrome);
-
-  // Front and rear window pillars
   addBox(car,side*1.20,2.02,-1.27,.075,.85,.09,white);
   addBox(car,side*1.20,2.02,.90,.075,.85,.09,white);
 
-  // Side mirror
   addBox(car,side*1.30,1.85,-1.25,.24,.12,.25,black);
   addBox(car,side*1.43,1.91,-1.30,.22,.17,.3,white);
 }
@@ -600,6 +589,72 @@ car.add(antenna);
 car.position.set(0,0,0);
 
 // ==========================================
+// PLAYER CHARACTER
+// ==========================================
+
+const player = new THREE.Group();
+scene.add(player);
+
+// The character faces local -Z.
+const skin = material(0xc9916b);
+const uniform = material(0x172d4b);
+const uniformDark = material(0x101e32);
+const beltMaterial = material(0x17191d);
+const badgeMaterial = new THREE.MeshStandardMaterial({
+  color:0xe0b94f,
+  metalness:.65,
+  roughness:.35
+});
+const bootMaterial = material(0x101215);
+
+const body = addBox(player,0,1.13,0,.58,.85,.34,uniform);
+body.position.y = 1.13;
+
+const head = new THREE.Mesh(
+  new THREE.SphereGeometry(.23,12,10),skin
+);
+head.position.set(0,1.78,0);
+player.add(head);
+
+// Police cap
+addBox(player,0,2.00,0,.47,.12,.43,uniformDark);
+addBox(player,0,1.94,-.13,.50,.045,.28,uniformDark);
+
+// Badge
+addBox(player,-.17,1.35,-.178,.10,.13,.025,badgeMaterial);
+
+// Belt
+addBox(player,0,.82,0,.62,.12,.37,beltMaterial);
+
+// Legs
+const leftLeg = new THREE.Group();
+const rightLeg = new THREE.Group();
+player.add(leftLeg,rightLeg);
+
+addBox(leftLeg,0,-.20,0,.21,.53,.24,uniformDark);
+addBox(leftLeg,0,-.48,-.035,.24,.16,.36,bootMaterial);
+leftLeg.position.set(-.17,.68,0);
+
+addBox(rightLeg,0,-.20,0,.21,.53,.24,uniformDark);
+addBox(rightLeg,0,-.48,-.035,.24,.16,.36,bootMaterial);
+rightLeg.position.set(.17,.68,0);
+
+// Arms
+const leftArm = new THREE.Group();
+const rightArm = new THREE.Group();
+player.add(leftArm,rightArm);
+
+addBox(leftArm,0,-.22,0,.19,.48,.20,uniform);
+addBox(leftArm,0,-.46,-.015,.17,.13,.17,skin);
+leftArm.position.set(-.40,1.45,0);
+
+addBox(rightArm,0,-.22,0,.19,.48,.20,uniform);
+addBox(rightArm,0,-.46,-.015,.17,.13,.17,skin);
+rightArm.position.set(.40,1.45,0);
+
+player.visible = false;
+
+// ==========================================
 // GAME STATE
 // ==========================================
 
@@ -612,9 +667,43 @@ let paused = false;
 let lightsOn = false;
 let sirenOn = false;
 let cameraMode = 0;
+let inVehicle = true;
+
+let walkingSpeed = 0;
+let playerHeading = 0;
+let walkAnimationTime = 0;
 
 const keys = {};
 const clock = new THREE.Clock();
+
+const controlsEl = document.getElementById('controls');
+
+function updateControls(){
+  if(inVehicle){
+    controlsEl.innerHTML = `
+      <span class="key">W / ↑</span> ACCELERATE<br>
+      <span class="key">S / ↓</span> BRAKE<br>
+      <span class="key">A / D</span> STEER<br>
+      <span class="key">SPACE</span> HANDBRAKE<br>
+      <span class="key">E</span> EXIT VEHICLE<br>
+      <span class="key">J</span> EMERGENCY LIGHTS<br>
+      <span class="key">R</span> SIREN ON / OFF<br>
+      <span class="key">T</span> CHANGE SIREN TONE<br>
+      <span class="key">C</span> CHANGE CAMERA<br>
+      <span class="key">ESC</span> PAUSE
+    `;
+    document.getElementById('vehicleStatus').textContent = 'IN VEHICLE';
+  }else{
+    controlsEl.innerHTML = `
+      <span class="key">W / ↑</span> WALK FORWARD<br>
+      <span class="key">S / ↓</span> WALK BACKWARD<br>
+      <span class="key">A / D</span> TURN<br>
+      <span class="key">E</span> ENTER VEHICLE<br>
+      <span class="key">ESC</span> PAUSE
+    `;
+    document.getElementById('vehicleStatus').textContent = 'ON FOOT';
+  }
+}
 
 window.addEventListener('keydown',e=>{
   keys[e.code] = true;
@@ -624,6 +713,16 @@ window.addEventListener('keydown',e=>{
   }
 
   if(e.repeat)return;
+
+  if(!started || paused)return;
+
+  if(e.code==='KeyE'){
+    if(inVehicle)exitVehicle();
+    else tryEnterVehicle();
+    return;
+  }
+
+  if(!inVehicle)return;
 
   if(e.code==='KeyJ')toggleLights();
   if(e.code==='KeyR')toggleSiren();
@@ -635,12 +734,89 @@ window.addEventListener('keydown',e=>{
     showMessage(cameraMode===0?'CHASE CAMERA':'HOOD CAMERA');
   }
 
-  if(e.code==='Escape'&&started)togglePause();
+  if(e.code==='Escape')togglePause();
+  else if(e.code==='Escape'&&started)togglePause();
 });
 
 window.addEventListener('keyup',e=>{
   keys[e.code] = false;
 });
+
+window.addEventListener('blur',()=>{
+  for(const key in keys)keys[key]=false;
+});
+
+// ==========================================
+// ENTER AND EXIT VEHICLE
+// ==========================================
+
+const tempVector = new THREE.Vector3();
+
+function getCarLocalPosition(x,y,z){
+  return new THREE.Vector3(x,y,z)
+    .applyAxisAngle(new THREE.Vector3(0,1,0),heading)
+    .add(car.position);
+}
+
+function exitVehicle(){
+  if(!inVehicle)return;
+
+  // Do not let the car roll away while the officer is outside.
+  if(Math.abs(speed)>1.5){
+    showMessage('SLOW DOWN BEFORE EXITING');
+    return;
+  }
+
+  speed = 0;
+  steering = 0;
+
+  // Spawn beside the driver's door.
+  const exitPosition = getCarLocalPosition(-2.65,0,0);
+
+  player.position.copy(exitPosition);
+  playerHeading = heading;
+  player.rotation.y = playerHeading;
+
+  player.visible = true;
+  car.visible = true;
+  inVehicle = false;
+
+  for(const key in keys)keys[key]=false;
+
+  updateControls();
+  showMessage('YOU LEFT THE PATROL VEHICLE');
+  updateCamera();
+}
+
+function tryEnterVehicle(){
+  const distance = player.position.distanceTo(car.position);
+
+  if(distance>5.2){
+    showMessage('GET CLOSER TO YOUR PATROL CAR');
+    return;
+  }
+
+  // The officer must be near the driver's side.
+  const driverDoor = getCarLocalPosition(-2.65,0,0);
+  const doorDistance = player.position.distanceTo(driverDoor);
+
+  if(doorDistance>3.5){
+    showMessage('MOVE TO THE DRIVER SIDE DOOR');
+    return;
+  }
+
+  inVehicle = true;
+  player.visible = false;
+  walkingSpeed = 0;
+  speed = 0;
+  heading = car.rotation.y;
+
+  for(const key in keys)keys[key]=false;
+
+  updateControls();
+  updateCamera();
+  showMessage('BACK IN YOUR PATROL VEHICLE');
+}
 
 // ==========================================
 // EMERGENCY LIGHTS
@@ -856,17 +1032,30 @@ function showMessage(text){
 // COLLISION
 // ==========================================
 
-function hitsBuilding(x,z){
+function hitsBuilding(x,z,radiusX=2.2,radiusZ=3.5){
   for(const b of buildings){
     if(
-      x+2.2>b.minX &&
-      x-2.2<b.maxX &&
-      z+3.5>b.minZ &&
-      z-3.5<b.maxZ
+      x+radiusX>b.minX &&
+      x-radiusX<b.maxX &&
+      z+radiusZ>b.minZ &&
+      z-radiusZ<b.maxZ
     )return true;
   }
 
   return false;
+}
+
+function hitsCar(x,z){
+  const dx = x-car.position.x;
+  const dz = z-car.position.z;
+
+  const c = Math.cos(heading);
+  const s = Math.sin(heading);
+
+  const localX = dx*c-dz*s;
+  const localZ = dx*s+dz*c;
+
+  return Math.abs(localX)<2.1 && Math.abs(localZ)<3.8;
 }
 
 // ==========================================
@@ -879,34 +1068,46 @@ const cameraForward = new THREE.Vector3(0,0,-1);
 const worldUp = new THREE.Vector3(0,1,0);
 
 function updateCamera(){
-  cameraForward.set(
-    -Math.sin(heading),
-    0,
-    -Math.cos(heading)
-  );
+  if(inVehicle){
+    cameraForward.set(
+      -Math.sin(heading),
+      0,
+      -Math.cos(heading)
+    );
 
-  if(cameraMode===0){
-    // Fixed chase camera
-    cameraOffset.set(0,3.8,9);
-    cameraOffset.applyAxisAngle(worldUp,heading);
+    if(cameraMode===0){
+      cameraOffset.set(0,3.8,9);
+      cameraOffset.applyAxisAngle(worldUp,heading);
 
-    camera.position.copy(car.position).add(cameraOffset);
+      camera.position.copy(car.position).add(cameraOffset);
 
-    cameraLookTarget.copy(car.position)
-      .addScaledVector(cameraForward,18);
+      cameraLookTarget.copy(car.position)
+        .addScaledVector(cameraForward,18);
 
-    cameraLookTarget.y += 1.0;
+      cameraLookTarget.y += 1.0;
+    }else{
+      cameraOffset.set(0,2.35,-1.25);
+      cameraOffset.applyAxisAngle(worldUp,heading);
+
+      camera.position.copy(car.position).add(cameraOffset);
+
+      cameraLookTarget.copy(car.position)
+        .addScaledVector(cameraForward,32);
+
+      cameraLookTarget.y += 1.0;
+    }
   }else{
-    // Fixed hood camera
-    cameraOffset.set(0,2.35,-1.25);
-    cameraOffset.applyAxisAngle(worldUp,heading);
+    // Third-person walking camera.
+    cameraOffset.set(0,4.5,7.5);
+    cameraOffset.applyAxisAngle(worldUp,playerHeading);
 
-    camera.position.copy(car.position).add(cameraOffset);
+    camera.position.copy(player.position).add(cameraOffset);
 
-    cameraLookTarget.copy(car.position)
-      .addScaledVector(cameraForward,32);
-
-    cameraLookTarget.y += 1.0;
+    cameraLookTarget.set(
+      player.position.x-Math.sin(playerHeading)*5,
+      player.position.y+1.25,
+      player.position.z-Math.cos(playerHeading)*5
+    );
   }
 
   camera.lookAt(cameraLookTarget);
@@ -918,12 +1119,75 @@ function updateCameraStatus(){
 }
 
 // ==========================================
+// WALKING
+// ==========================================
+
+function updateWalking(dt){
+  const forward = keys['KeyW']||keys['ArrowUp'];
+  const backward = keys['KeyS']||keys['ArrowDown'];
+  const left = keys['KeyA']||keys['ArrowLeft'];
+  const right = keys['KeyD']||keys['ArrowRight'];
+
+  const turnInput = (right?1:0)-(left?1:0);
+  const moveInput = (forward?1:0)-(backward?1:0);
+
+  // Turn the officer.
+  playerHeading -= turnInput*2.2*dt;
+  player.rotation.y = playerHeading;
+
+  walkingSpeed = THREE.MathUtils.damp(
+    walkingSpeed,moveInput*7,9,dt
+  );
+
+  if(Math.abs(walkingSpeed)>.05){
+    const nextX = player.position.x-
+      Math.sin(playerHeading)*walkingSpeed*dt;
+
+    const nextZ = player.position.z-
+      Math.cos(playerHeading)*walkingSpeed*dt;
+
+    if(
+      !hitsBuilding(nextX,nextZ,.45,.45) &&
+      !hitsCar(nextX,nextZ)
+    ){
+      player.position.x = nextX;
+      player.position.z = nextZ;
+    }else{
+      walkingSpeed = 0;
+    }
+  }
+
+  // Simple walking animation.
+  if(Math.abs(walkingSpeed)>.1){
+    walkAnimationTime += dt*Math.abs(walkingSpeed)*1.8;
+
+    const swing = Math.sin(walkAnimationTime)*.55;
+
+    leftLeg.rotation.x = swing;
+    rightLeg.rotation.x = -swing;
+    leftArm.rotation.x = -swing*.65;
+    rightArm.rotation.x = swing*.65;
+  }else{
+    leftLeg.rotation.x = THREE.MathUtils.damp(leftLeg.rotation.x,0,8,dt);
+    rightLeg.rotation.x = THREE.MathUtils.damp(rightLeg.rotation.x,0,8,dt);
+    leftArm.rotation.x = THREE.MathUtils.damp(leftArm.rotation.x,0,8,dt);
+    rightArm.rotation.x = THREE.MathUtils.damp(rightArm.rotation.x,0,8,dt);
+  }
+
+  // Keep the player within the city.
+  player.position.x = THREE.MathUtils.clamp(player.position.x,-440,440);
+  player.position.z = THREE.MathUtils.clamp(player.position.z,-440,440);
+
+  updateCamera();
+
+  document.getElementById('speed').textContent = '000';
+}
+
+// ==========================================
 // DRIVING
 // ==========================================
 
-function update(dt){
-  if(!started||paused)return;
-
+function updateDriving(dt){
   const forward = keys['KeyW']||keys['ArrowUp'];
   const backward = keys['KeyS']||keys['ArrowDown'];
   const left = keys['KeyA']||keys['ArrowLeft'];
@@ -975,6 +1239,20 @@ function update(dt){
 }
 
 // ==========================================
+// MAIN UPDATE
+// ==========================================
+
+function update(dt){
+  if(!started||paused)return;
+
+  if(inVehicle){
+    updateDriving(dt);
+  }else{
+    updateWalking(dt);
+  }
+}
+
+// ==========================================
 // MAIN LOOP
 // ==========================================
 
@@ -997,10 +1275,15 @@ animate();
 document.getElementById('startButton').onclick = ()=>{
   started = true;
   paused = false;
+  inVehicle = true;
+
+  player.visible = false;
+  car.visible = true;
 
   document.getElementById('menu').style.display = 'none';
   document.getElementById('hud').style.display = 'block';
 
+  updateControls();
   updateCamera();
   clock.getDelta();
   showMessage('PATROL STARTED');
@@ -1011,6 +1294,12 @@ function togglePause(){
 
   document.getElementById('pauseScreen').style.display =
     paused?'flex':'none';
+
+  if(paused){
+    for(const key in keys)keys[key]=false;
+  }else{
+    clock.getDelta();
+  }
 }
 
 document.getElementById('resumeButton').onclick = ()=>{
@@ -1023,15 +1312,23 @@ document.getElementById('exitButton').onclick = ()=>{
   started = false;
   paused = false;
   speed = 0;
+  walkingSpeed = 0;
   lightsOn = false;
   sirenOn = false;
   cameraMode = 0;
+  inVehicle = true;
 
   stopSiren();
 
   car.position.set(0,0,0);
   heading = 0;
   car.rotation.y = 0;
+
+  player.position.set(-2.65,0,0);
+  player.visible = false;
+  car.visible = true;
+
+  for(const key in keys)keys[key]=false;
 
   for(const light of lightSegments){
     light.mesh.material = offMaterial;
@@ -1041,6 +1338,7 @@ document.getElementById('exitButton').onclick = ()=>{
   document.getElementById('sirenStatus').textContent = 'SIREN: OFF';
   updateSirenModeDisplay();
   updateCameraStatus();
+  updateControls();
 
   document.getElementById('pauseScreen').style.display = 'none';
   document.getElementById('hud').style.display = 'none';
