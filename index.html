@@ -30,7 +30,11 @@ button:hover{background:#45aaff}
 #message{position:absolute;top:100px;left:50%;transform:translateX(-50%);background:#091727dd;padding:12px 25px;font-size:12px;letter-spacing:2px;opacity:0;transition:opacity .2s}
 #pauseScreen{display:none;position:fixed;inset:0;z-index:9;background:#050b14ef;align-items:center;justify-content:center;text-align:center}
 #pauseScreen h1{font-size:48px;letter-spacing:4px}
-@media(max-width:600px){.bottom-right{font-size:9px;padding:8px}.bottom-left{padding:10px}#speed{font-size:32px}}
+@media(max-width:600px){
+ .bottom-right{font-size:9px;padding:8px}
+ .bottom-left{padding:10px}
+ #speed{font-size:32px}
+}
 </style>
 
 <script type="importmap">
@@ -50,7 +54,7 @@ button:hover{background:#45aaff}
       Get behind the wheel and take control.
     </p>
     <button id="startButton">START PATROL →</button>
-    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.4 | SIREN & ROAD UPDATE</p>
+    <p style="font-size:11px;color:#8097ad;margin-top:30px">VERSION 0.7 | SEDAN & CAMERA UPDATE</p>
   </div>
 </div>
 
@@ -65,6 +69,7 @@ button:hover{background:#45aaff}
     <div id="lightStatus">ELS: OFF</div>
     <div id="sirenStatus" style="margin-top:6px;color:#b4c2d0">SIREN: OFF</div>
     <div id="sirenModeStatus" style="margin-top:6px;color:#8fa8bf">MODE: WAIL (T)</div>
+    <div id="cameraStatus" style="margin-top:6px;color:#8fa8bf">CAMERA: CHASE (C)</div>
   </div>
 
   <div id="message">PATROL STARTED</div>
@@ -82,7 +87,7 @@ button:hover{background:#45aaff}
     <span class="key">J</span> EMERGENCY LIGHTS<br>
     <span class="key">R</span> SIREN ON / OFF<br>
     <span class="key">T</span> CHANGE SIREN TONE<br>
-    <span class="key">C</span> CAMERA<br>
+    <span class="key">C</span> CHANGE CAMERA<br>
     <span class="key">ESC</span> PAUSE
   </div>
 </div>
@@ -103,25 +108,24 @@ import * as THREE from 'three';
 // RENDERER
 // ==========================================
 
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x91b5d0);
-scene.fog=new THREE.Fog(0x91b5d0,180,600);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x91b5d0);
+scene.fog = new THREE.Fog(0x91b5d0,180,600);
 
-const camera=new THREE.PerspectiveCamera(
+const camera = new THREE.PerspectiveCamera(
   65,window.innerWidth/window.innerHeight,.1,900
 );
 
-const renderer=new THREE.WebGLRenderer({
-  antialias:false,
+const renderer = new THREE.WebGLRenderer({
+  antialias:true,
   powerPreference:"high-performance",
   stencil:false
 });
 
 renderer.setSize(window.innerWidth,window.innerHeight);
-renderer.setPixelRatio(1);
-renderer.outputColorSpace=THREE.SRGBColorSpace;
-renderer.shadowMap.enabled=false;
-
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = false;
 document.body.appendChild(renderer.domElement);
 
 // ==========================================
@@ -130,29 +134,55 @@ document.body.appendChild(renderer.domElement);
 
 scene.add(new THREE.HemisphereLight(0xffffff,0x65765a,2));
 
-const sun=new THREE.DirectionalLight(0xffffff,1.5);
+const sun = new THREE.DirectionalLight(0xffffff,1.5);
 sun.position.set(100,150,80);
 scene.add(sun);
 
 // ==========================================
-// MATERIALS
+// MATERIALS AND HELPERS
 // ==========================================
 
-const material=color=>new THREE.MeshStandardMaterial({
-  color,roughness:1
-});
+const material = (color,roughness=1) =>
+  new THREE.MeshStandardMaterial({color,roughness});
 
-const grass=material(0x56764b);
-
-// Use unlit asphalt materials so strong scene lighting cannot wash roads out white.
-const road=new THREE.MeshBasicMaterial({color:0x292e33});
-const sidewalk=new THREE.MeshBasicMaterial({color:0x74797e});
+const grass = material(0x56764b);
+const road = new THREE.MeshBasicMaterial({color:0x292e33});
+const sidewalk = new THREE.MeshBasicMaterial({color:0x74797e});
 
 function addBox(parent,x,y,z,sx,sy,sz,mat){
-  const mesh=new THREE.Mesh(
+  const mesh = new THREE.Mesh(
     new THREE.BoxGeometry(sx,sy,sz),mat
   );
   mesh.position.set(x,y,z);
+  parent.add(mesh);
+  return mesh;
+}
+
+function addCylinder(parent,x,y,z,radius,length,mat,segments=24){
+  const mesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(radius,radius,length,segments),mat
+  );
+  mesh.rotation.z = Math.PI/2;
+  mesh.position.set(x,y,z);
+  parent.add(mesh);
+  return mesh;
+}
+
+function addPolygon(parent,points,mat){
+  const vertices = [];
+  for(const p of points) vertices.push(p[0],p[1],p[2]);
+
+  const indices = [];
+  for(let i=1;i<points.length-1;i++){
+    indices.push(0,i,i+1);
+  }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+  geo.setIndex(indices);
+  geo.computeVertexNormals();
+
+  const mesh = new THREE.Mesh(geo,mat);
   parent.add(mesh);
   return mesh;
 }
@@ -163,11 +193,11 @@ function addBox(parent,x,y,z,sx,sy,sz,mat){
 
 addBox(scene,0,-.6,0,900,1,900,grass);
 
-const spacing=120;
-const roadWidth=27;
+const spacing = 120;
+const roadWidth = 27;
 
 for(let i=-4;i<=4;i++){
-  const p=i*spacing;
+  const p = i*spacing;
 
   addBox(scene,p,0,0,roadWidth,.1,900,road);
   addBox(scene,0,0,p,900,.1,roadWidth,road);
@@ -178,20 +208,20 @@ for(let i=-4;i<=4;i++){
   }
 }
 
-// Instanced road markings
+// Road markings
 
-const dashGeo=new THREE.BoxGeometry(.22,.04,7);
-const dashMat=new THREE.MeshBasicMaterial({color:0xe6dfb8});
-const dashes=new THREE.InstancedMesh(dashGeo,dashMat,306);
-const dummy=new THREE.Object3D();
+const dashGeo = new THREE.BoxGeometry(.22,.04,7);
+const dashMat = new THREE.MeshBasicMaterial({color:0xe6dfb8});
+const dashes = new THREE.InstancedMesh(dashGeo,dashMat,306);
+const dummy = new THREE.Object3D();
 
-let dashIndex=0;
+let dashIndex = 0;
 
 for(let i=-4;i<=4;i++){
-  const p=i*spacing;
+  const p = i*spacing;
 
   for(let j=-8;j<=8;j++){
-    const z=j*50;
+    const z = j*50;
 
     dummy.position.set(p,.09,z);
     dummy.rotation.set(0,0,0);
@@ -199,50 +229,50 @@ for(let i=-4;i<=4;i++){
     dashes.setMatrixAt(dashIndex++,dummy.matrix);
 
     dummy.position.set(z,.09,p);
-    dummy.rotation.y=Math.PI/2;
+    dummy.rotation.y = Math.PI/2;
     dummy.updateMatrix();
     dashes.setMatrixAt(dashIndex++,dummy.matrix);
   }
 }
 
-dashes.count=dashIndex;
-dashes.instanceMatrix.needsUpdate=true;
+dashes.count = dashIndex;
+dashes.instanceMatrix.needsUpdate = true;
 scene.add(dashes);
 
 // ==========================================
 // BUILDINGS
 // ==========================================
 
-const buildingGeo=new THREE.BoxGeometry(1,1,1);
-const buildingMat=new THREE.MeshStandardMaterial({color:0xffffff});
+const buildingGeo = new THREE.BoxGeometry(1,1,1);
+const buildingMat = new THREE.MeshStandardMaterial({color:0xffffff});
 
-const buildingMesh=new THREE.InstancedMesh(
+const buildingMesh = new THREE.InstancedMesh(
   buildingGeo,buildingMat,150
 );
 
-const buildingColors=[
+const buildingColors = [
   0x999991,0x858e98,0xc0b6a6,
   0x747d85,0xa9a49a,0x777c72
 ];
 
-const buildings=[];
-let buildingIndex=0;
+const buildings = [];
+let buildingIndex = 0;
 
 for(let gx=-3;gx<=3;gx++){
   for(let gz=-3;gz<=3;gz++){
 
-    const centerX=gx*spacing+60;
-    const centerZ=gz*spacing+60;
+    const centerX = gx*spacing+60;
+    const centerZ = gz*spacing+60;
 
-    const count=2+Math.floor(Math.random()*2);
+    const count = 2+Math.floor(Math.random()*2);
 
     for(let n=0;n<count;n++){
-      const width=18+Math.random()*12;
-      const depth=18+Math.random()*12;
-      const height=20+Math.random()*45;
+      const width = 18+Math.random()*12;
+      const depth = 18+Math.random()*12;
+      const height = 20+Math.random()*45;
 
-      const x=centerX+(n%2===0?-23:23);
-      const z=centerZ+(n<2?-20:20);
+      const x = centerX+(n%2===0?-23:23);
+      const z = centerZ+(n<2?-20:20);
 
       dummy.position.set(x,height/2,z);
       dummy.scale.set(width,height,depth);
@@ -269,71 +299,390 @@ for(let gx=-3;gx<=3;gx++){
   }
 }
 
-buildingMesh.count=buildingIndex;
-buildingMesh.instanceMatrix.needsUpdate=true;
-buildingMesh.instanceColor.needsUpdate=true;
+buildingMesh.count = buildingIndex;
+buildingMesh.instanceMatrix.needsUpdate = true;
+buildingMesh.instanceColor.needsUpdate = true;
 scene.add(buildingMesh);
 
 // ==========================================
-// POLICE CAR
+// POLICE SEDAN
 // ==========================================
 
-const car=new THREE.Group();
+const car = new THREE.Group();
 scene.add(car);
 
-const white=material(0xe8edf0);
-const black=material(0x101820);
-const glass=material(0x29465a);
-const tires=material(0x111111);
-const rims=material(0x929ba4);
+const white = material(0xe9edf0,.45);
+const whiteDark = material(0xcbd2d8,.6);
+const black = material(0x101820,.65);
+const glass = material(0x18384d,.25);
+const glassHighlight = material(0x42677d,.35);
+const tires = material(0x101113);
+const rims = material(0x9da8b2,.35);
+const chrome = material(0xc4cbd0,.3);
+const blue = material(0x0755a7,.5);
+const darkBlue = material(0x092c50,.5);
+const redLens = new THREE.MeshBasicMaterial({color:0xff2525});
+const clearLens = new THREE.MeshBasicMaterial({color:0xeaf5ff});
+const amberLens = new THREE.MeshBasicMaterial({color:0xffa323});
 
-addBox(car,0,1.05,0,3.1,1.05,6.2,white);
-addBox(car,0,1.15,-.2,3.15,.55,2.6,black);
-addBox(car,0,1.4,-2.15,3,.35,1.65,white);
-addBox(car,0,1.4,2.35,3,.35,1.1,white);
-addBox(car,0,2.15,.2,2.45,1.25,3.1,glass);
-addBox(car,0,2.8,.2,2.5,.15,3.2,white);
+// Main lower body, hood, trunk and bumpers
 
-addBox(car,0,.85,-3.15,3.2,.3,.25,black);
-addBox(car,0,.85,3.15,3.2,.3,.25,black);
-addBox(car,0,1.35,-.4,3.18,.48,.12,black);
+addBox(car,0,1.03,0,3.05,.88,6.15,white);
+addBox(car,0,1.39,-2.05,2.98,.35,1.8,white);
+addBox(car,0,1.37,2.35,2.98,.36,1.35,white);
 
-addBox(car,0,2.93,.2,1.9,.17,.5,black);
+// Lower black trim
 
-const redMaterial=new THREE.MeshBasicMaterial({color:0xff142b});
-const blueMaterial=new THREE.MeshBasicMaterial({color:0x087dff});
-const offMaterial=new THREE.MeshBasicMaterial({color:0x171c22});
+addBox(car,0,.65,0,3.08,.16,5.8,black);
+addBox(car,0,.82,-3.12,3.12,.28,.22,black);
+addBox(car,0,.82,3.12,3.12,.28,.22,black);
 
-const redLight=addBox(car,-.55,3.05,.2,.7,.18,.35,redMaterial);
-const blueLight=addBox(car,.55,3.05,.2,.7,.18,.35,blueMaterial);
+// Hood and trunk contours
 
-const wheels=[];
+addBox(car,0,1.60,-2.05,2.7,.035,1.4,whiteDark);
+addBox(car,0,1.57,2.35,2.65,.035,.95,whiteDark);
 
-for(const x of [-1.58,1.58]){
-  for(const z of [-2,2]){
-    const wheel=new THREE.Mesh(
-      new THREE.CylinderGeometry(.62,.62,.35,12),tires
-    );
+// ==========================================
+// SHAPED CABIN
+// ==========================================
 
-    wheel.rotation.z=Math.PI/2;
-    wheel.position.set(x,.65,z);
-    car.add(wheel);
-    wheels.push(wheel);
+// The cabin is a custom trapezoid-shaped sedan roof section.
+// Front of vehicle points toward negative Z.
 
-    const rim=new THREE.Mesh(
-      new THREE.CylinderGeometry(.3,.3,.37,12),rims
-    );
+const cabinPoints = [
+  [-1.18,1.48,-1.48],
+  [ 1.18,1.48,-1.48],
+  [ 1.18,1.48, 1.48],
+  [-1.18,1.48, 1.48],
+  [-.98,2.52,-.76],
+  [ .98,2.52,-.76],
+  [ .98,2.52, .82],
+  [-.98,2.52, .82]
+];
 
-    rim.rotation.z=Math.PI/2;
-    rim.position.copy(wheel.position);
-    car.add(rim);
+const cabinFaces = [
+  [0,1,5],[0,5,4],
+  [1,2,6],[1,6,5],
+  [2,3,7],[2,7,6],
+  [3,0,4],[3,4,7],
+  [4,5,6],[4,6,7],
+  [0,3,2],[0,2,1]
+];
+
+const cabinVertices = [];
+for(const face of cabinFaces){
+  for(const index of face){
+    cabinVertices.push(...cabinPoints[index]);
   }
 }
 
-for(const x of [-1,1]){
-  addBox(car,x,1.35,-3.12,.65,.3,.12,
-    new THREE.MeshBasicMaterial({color:0xffffff}));
+const cabinGeo = new THREE.BufferGeometry();
+cabinGeo.setAttribute(
+  'position',
+  new THREE.Float32BufferAttribute(cabinVertices,3)
+);
+cabinGeo.computeVertexNormals();
+
+const cabinMesh = new THREE.Mesh(
+  cabinGeo,
+  new THREE.MeshStandardMaterial({
+    color:0xe8edf0,
+    roughness:.5,
+    side:THREE.DoubleSide
+  })
+);
+car.add(cabinMesh);
+
+// Dark side windows, divided into front and rear sections
+
+const sideWindowMat = new THREE.MeshStandardMaterial({
+  color:0x17364a,
+  roughness:.25,
+  metalness:.15,
+  side:THREE.DoubleSide
+});
+
+for(const side of [-1,1]){
+  const x = side*1.195;
+
+  // Front side window
+  addPolygon(car,[
+    [x,1.68,-1.31],
+    [x,1.68,-.80],
+    [x,2.40,-.64],
+    [x,2.40,-.64]
+  ],sideWindowMat);
+
+  // Rear side window
+  addPolygon(car,[
+    [x,1.68,-.62],
+    [x,1.68,1.28],
+    [x,2.40,.69],
+    [x,2.40,.69]
+  ],sideWindowMat);
+
+  // Side window divider
+  addBox(car,x,2.02,-.68,.065,.78,.075,whiteDark);
+
+  // Window lower trim
+  addBox(car,side*1.205,1.64,-.05,.045,.065,2.65,chrome);
+
+  // Door pillars
+  addBox(car,side*1.20,2.02,-.77,.075,.88,.09,white);
+  addBox(car,side*1.20,2.02,.78,.075,.88,.09,white);
 }
+
+// Front windshield: sloped glass panel
+
+addPolygon(car,[
+  [-1.06,1.62,-1.51],
+  [ 1.06,1.62,-1.51],
+  [ .94,2.42,-.80],
+  [-.94,2.42,-.80]
+],glass);
+
+// Rear windshield
+
+addPolygon(car,[
+  [-.94,2.42,.87],
+  [ .94,2.42,.87],
+  [ 1.08,1.62,1.53],
+  [-1.08,1.62,1.53]
+],glass);
+
+// Roof
+
+addBox(car,0,2.55,.02,2.02,.13,1.78,white);
+
+// Roof edge trim
+
+for(const side of [-1,1]){
+  addBox(car,side*1.02,2.50,.02,.055,.08,1.72,whiteDark);
+}
+
+// Rear deck and front cowl
+
+addBox(car,0,1.66,1.48,2.1,.12,.18,white);
+addBox(car,0,1.66,-1.50,2.1,.12,.18,white);
+
+// ==========================================
+// POLICE DOOR MARKINGS
+// ==========================================
+
+for(const side of [-1,1]){
+  // Blue stripe along the doors
+  addBox(car,side*1.535,1.28,.15,.035,.25,2.75,blue);
+
+  // Lower blue rocker stripe
+  addBox(car,side*1.54,.88,.1,.035,.08,2.7,darkBlue);
+
+  // Door seams
+  for(const z of [-.75,.9]){
+    addBox(car,side*1.54,1.25,z,.025,.72,.025,whiteDark);
+  }
+
+  // Door handles
+  for(const z of [-.25,1.05]){
+    addBox(car,side*1.56,1.53,z,.035,.055,.25,chrome);
+  }
+
+  // Side mirror mounts and mirrors
+  addBox(car,side*1.30,1.85,-1.25,.24,.12,.25,black);
+  addBox(car,side*1.43,1.91,-1.30,.22,.17,.3,white);
+
+  // Fender marker
+  addBox(car,side*1.54,1.35,-2.55,.035,.12,.28,amberLens);
+}
+
+// Police text decals using canvas textures
+
+function makeTextTexture(text,color){
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 128;
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,512,128);
+  ctx.fillStyle = color;
+  ctx.font = 'bold 78px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text,256,64);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
+const policeTexture = makeTextTexture('POLICE','#ffffff');
+const numberTexture = makeTextTexture('911','#dcecff');
+
+for(const side of [-1,1]){
+  const decal = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.65,.40),
+    new THREE.MeshBasicMaterial({
+      map:policeTexture,
+      transparent:true,
+      side:THREE.DoubleSide
+    })
+  );
+  decal.rotation.y = side===1?Math.PI/2:-Math.PI/2;
+  decal.position.set(side*1.56,1.28,.1);
+  car.add(decal);
+
+  const number = new THREE.Mesh(
+    new THREE.PlaneGeometry(.65,.20),
+    new THREE.MeshBasicMaterial({
+      map:numberTexture,
+      transparent:true,
+      side:THREE.DoubleSide
+    })
+  );
+  number.rotation.y = side===1?Math.PI/2:-Math.PI/2;
+  number.position.set(side*1.56,1.03,.1);
+  car.add(number);
+}
+
+// ==========================================
+// FRONT GRILLE AND LIGHTS
+// ==========================================
+
+// Grille frame
+
+addBox(car,0,1.12,-3.19,1.35,.48,.08,chrome);
+addBox(car,0,1.12,-3.245,1.22,.36,.04,black);
+
+// Grille bars
+
+for(let i=0;i<5;i++){
+  addBox(car,0,.97+i*.075,-3.275,1.12,.025,.025,chrome);
+}
+
+// Headlights
+
+for(const x of [-1,1]){
+  addBox(car,x,1.43,-3.18,.65,.32,.09,chrome);
+  addBox(car,x,1.44,-3.24,.54,.23,.035,clearLens);
+
+  // Amber turn signal
+  addBox(car,x*1.37,1.40,-3.13,.16,.22,.06,amberLens);
+
+  // Fog lights
+  addBox(car,x*.82,.91,-3.20,.27,.13,.06,clearLens);
+}
+
+// Front push bar
+
+addBox(car,0,.80,-3.35,2.35,.09,.09,chrome);
+addBox(car,-1.05,1.02,-3.35,.09,.42,.09,chrome);
+addBox(car,1.05,1.02,-3.35,.09,.42,.09,chrome);
+
+// Rear lights
+
+for(const x of [-1,1]){
+  addBox(car,x,1.42,3.15,.62,.28,.10,redLens);
+  addBox(car,x,1.42,3.21,.18,.19,.04,clearLens);
+}
+
+// Rear license plate
+
+addBox(car,0,1.15,3.20,.72,.24,.035,whiteDark);
+addBox(car,0,1.15,3.225,.54,.14,.025,black);
+
+// ==========================================
+// WHEELS AND RIMS
+// ==========================================
+
+const wheels = [];
+
+for(const x of [-1.57,1.57]){
+  for(const z of [-2.05,2.05]){
+
+    // Tire
+    const wheel = addCylinder(car,x,.66,z,.62,.36,tires,32);
+    wheel.rotation.z = Math.PI/2;
+    wheels.push(wheel);
+
+    // Outer rim
+    const rim = addCylinder(car,x+Math.sign(x)*.015,.66,z,.39,.38,rims,24);
+    rim.rotation.z = Math.PI/2;
+
+    // Inner rim
+    addCylinder(car,x+Math.sign(x)*.03,.66,z,.25,.39,black,24);
+
+    // Center hub
+    addCylinder(car,x+Math.sign(x)*.045,.66,z,.105,.41,chrome,16);
+
+    // Spokes
+    for(let i=0;i<8;i++){
+      const angle = i*Math.PI/4;
+      const spoke = addBox(
+        car,
+        x+Math.sign(x)*.045,
+        .66+Math.sin(angle)*.18,
+        z+Math.cos(angle)*.18,
+        .035,.035,.24,
+        chrome
+      );
+      spoke.rotation.x = angle;
+    }
+
+    // Wheel arch trim
+    const arch = new THREE.Mesh(
+      new THREE.TorusGeometry(.69,.045,6,28,Math.PI),
+      black
+    );
+    arch.position.set(x,.68,z);
+    arch.rotation.set(0,Math.PI/2,0);
+    car.add(arch);
+  }
+}
+
+// ==========================================
+// EMERGENCY LIGHTBAR
+// ==========================================
+
+const lightbar = new THREE.Group();
+lightbar.position.set(0,2.69,.02);
+car.add(lightbar);
+
+addBox(lightbar,0,0,0,2.15,.10,.48,black);
+
+const redMaterial = new THREE.MeshBasicMaterial({color:0xff142b});
+const blueMaterial = new THREE.MeshBasicMaterial({color:0x087dff});
+const offMaterial = new THREE.MeshBasicMaterial({color:0x171c22});
+
+const lightSegments = [];
+
+for(let i=0;i<6;i++){
+  const x = -0.86+i*.344;
+  const isRed = i<3;
+
+  const segment = addBox(
+    lightbar,x,.105,0,.29,.16,.34,
+    offMaterial
+  );
+
+  lightSegments.push({
+    mesh:segment,
+    color:isRed?redMaterial:blueMaterial,
+    side:isRed?'red':'blue'
+  });
+}
+
+// Lightbar end caps
+
+addBox(lightbar,-1.08,.08,0,.10,.14,.43,chrome);
+addBox(lightbar,1.08,.08,0,.10,.14,.43,chrome);
+
+// Antenna
+
+const antenna = new THREE.Mesh(
+  new THREE.CylinderGeometry(.018,.035,.85,8),
+  black
+);
+antenna.position.set(.82,2.98,.95);
+car.add(antenna);
 
 car.position.set(0,0,0);
 
@@ -341,21 +690,21 @@ car.position.set(0,0,0);
 // GAME STATE
 // ==========================================
 
-let speed=0;
-let heading=0;
-let steering=0;
+let speed = 0;
+let heading = 0;
+let steering = 0;
 
-let started=false;
-let paused=false;
-let lightsOn=false;
-let sirenOn=false;
-let alternateCamera=false;
+let started = false;
+let paused = false;
+let lightsOn = false;
+let sirenOn = false;
+let cameraMode = 0;
 
-const keys={};
-const clock=new THREE.Clock();
+const keys = {};
+const clock = new THREE.Clock();
 
 window.addEventListener('keydown',e=>{
-  keys[e.code]=true;
+  keys[e.code] = true;
 
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)){
     e.preventDefault();
@@ -366,22 +715,33 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyJ')toggleLights();
   if(e.code==='KeyR')toggleSiren();
   if(e.code==='KeyT')cycleSirenMode();
-  if(e.code==='KeyC')alternateCamera=!alternateCamera;
+
+  if(e.code==='KeyC'){
+    cameraMode = (cameraMode+1)%2;
+    updateCameraStatus();
+    showMessage(cameraMode===0?'CHASE CAMERA':'HOOD CAMERA');
+  }
+
   if(e.code==='Escape'&&started)togglePause();
 });
 
 window.addEventListener('keyup',e=>{
-  keys[e.code]=false;
+  keys[e.code] = false;
 });
 
+function updateCameraStatus(){
+  document.getElementById('cameraStatus').textContent =
+    'CAMERA: '+(cameraMode===0?'CHASE':'HOOD')+' (C)';
+}
+
 // ==========================================
-// ELS
+// EMERGENCY LIGHTS
 // ==========================================
 
 function toggleLights(){
-  lightsOn=!lightsOn;
+  lightsOn = !lightsOn;
 
-  document.getElementById('lightStatus').textContent=
+  document.getElementById('lightStatus').textContent =
     'ELS: '+(lightsOn?'ON':'OFF');
 
   showMessage(lightsOn?'EMERGENCY LIGHTS ON':'EMERGENCY LIGHTS OFF');
@@ -389,55 +749,66 @@ function toggleLights(){
 
 function updateLights(){
   if(!lightsOn){
-    redLight.material=offMaterial;
-    blueLight.material=offMaterial;
+    for(const light of lightSegments){
+      light.mesh.material = offMaterial;
+    }
     return;
   }
 
-  const flash=Math.floor(performance.now()/160)%2===0;
+  const phase = Math.floor(performance.now()/115)%4;
 
-  redLight.material=flash?redMaterial:offMaterial;
-  blueLight.material=flash?offMaterial:blueMaterial;
+  for(const light of lightSegments){
+    const isRed = light.side==='red';
+
+    const active = isRed
+      ? (phase===0||phase===1)
+      : (phase===2||phase===3);
+
+    light.mesh.material = active?light.color:offMaterial;
+  }
 }
 
 // ==========================================
-// SIREN - SMOOTH, LAYERED, LOWER-HARSHNESS AUDIO
+// SIREN AUDIO
 // ==========================================
 
-let audioContext=null;
-let sirenOscillator=null;
-let sirenHarmonic=null;
-let sirenFilter=null;
-let sirenMaster=null;
-let sirenHarmonicGain=null;
-let sirenInterval=null;
-let sirenModeIndex=0;
+let audioContext = null;
+let sirenOscillator = null;
+let sirenHarmonic = null;
+let sirenFilter = null;
+let sirenMaster = null;
+let sirenHarmonicGain = null;
+let sirenInterval = null;
+let sirenModeIndex = 0;
 
-const sirenModes=[
+const sirenModes = [
   {name:'WAIL',low:520,high:850,duration:2.6},
   {name:'YELP',low:560,high:960,duration:.72},
   {name:'PHASER',low:620,high:880,duration:.30}
 ];
 
 function updateSirenModeDisplay(){
-  const mode=sirenModes[sirenModeIndex];
+  const mode = sirenModes[sirenModeIndex];
 
-  document.getElementById('sirenModeStatus').textContent=
+  document.getElementById('sirenModeStatus').textContent =
     'MODE: '+mode.name+' (T)';
 
-  document.getElementById('sirenStatus').textContent=
+  document.getElementById('sirenStatus').textContent =
     'SIREN: '+(sirenOn?mode.name:'OFF');
 }
 
 function scheduleSirenSweep(){
   if(!audioContext||!sirenOscillator||!sirenHarmonic)return;
 
-  const mode=sirenModes[sirenModeIndex];
-  const now=audioContext.currentTime;
-  const half=mode.duration/2;
+  const mode = sirenModes[sirenModeIndex];
+  const now = audioContext.currentTime;
+  const half = mode.duration/2;
 
-  for(const [osc,multiplier] of [[sirenOscillator,1],[sirenHarmonic,1.5]]){
-    const frequency=osc.frequency;
+  for(const [osc,multiplier] of [
+    [sirenOscillator,1],
+    [sirenHarmonic,1.5]
+  ]){
+    const frequency = osc.frequency;
 
     frequency.cancelScheduledValues(now);
     frequency.setValueAtTime(mode.low*multiplier,now);
@@ -447,30 +818,29 @@ function scheduleSirenSweep(){
 }
 
 function startSiren(){
-  const AudioContextClass=window.AudioContext||window.webkitAudioContext;
+  const AudioContextClass = window.AudioContext||window.webkitAudioContext;
   if(!AudioContextClass)return;
 
-  if(!audioContext)audioContext=new AudioContextClass();
+  if(!audioContext)audioContext = new AudioContextClass();
   audioContext.resume();
 
   if(sirenOscillator)return;
 
-  // A triangle fundamental gives the siren body; a quiet sine layer adds presence.
-  sirenOscillator=audioContext.createOscillator();
-  sirenHarmonic=audioContext.createOscillator();
-  sirenFilter=audioContext.createBiquadFilter();
-  sirenMaster=audioContext.createGain();
-  sirenHarmonicGain=audioContext.createGain();
+  sirenOscillator = audioContext.createOscillator();
+  sirenHarmonic = audioContext.createOscillator();
+  sirenFilter = audioContext.createBiquadFilter();
+  sirenMaster = audioContext.createGain();
+  sirenHarmonicGain = audioContext.createGain();
 
-  sirenOscillator.type='triangle';
-  sirenHarmonic.type='sine';
+  sirenOscillator.type = 'triangle';
+  sirenHarmonic.type = 'sine';
 
-  sirenFilter.type='lowpass';
-  sirenFilter.frequency.value=1900;
-  sirenFilter.Q.value=.45;
+  sirenFilter.type = 'lowpass';
+  sirenFilter.frequency.value = 1900;
+  sirenFilter.Q.value = .45;
 
-  sirenMaster.gain.value=0;
-  sirenHarmonicGain.gain.value=.16;
+  sirenMaster.gain.value = 0;
+  sirenHarmonicGain.gain.value = .16;
 
   sirenOscillator.connect(sirenFilter);
   sirenHarmonic.connect(sirenHarmonicGain);
@@ -487,7 +857,7 @@ function startSiren(){
 
   scheduleSirenSweep();
 
-  sirenInterval=setInterval(
+  sirenInterval = setInterval(
     scheduleSirenSweep,
     sirenModes[sirenModeIndex].duration*1000
   );
@@ -495,32 +865,31 @@ function startSiren(){
 
 function stopSiren(){
   clearInterval(sirenInterval);
-  sirenInterval=null;
+  sirenInterval = null;
 
   if(!audioContext||!sirenOscillator)return;
 
-  const now=audioContext.currentTime;
+  const now = audioContext.currentTime;
 
   sirenMaster.gain.cancelScheduledValues(now);
   sirenMaster.gain.setTargetAtTime(0,now,.045);
 
-  const oldOscillator=sirenOscillator;
-  const oldHarmonic=sirenHarmonic;
-  const oldFilter=sirenFilter;
-  const oldMaster=sirenMaster;
-  const oldHarmonicGain=sirenHarmonicGain;
+  const oldOscillator = sirenOscillator;
+  const oldHarmonic = sirenHarmonic;
+  const oldFilter = sirenFilter;
+  const oldMaster = sirenMaster;
+  const oldHarmonicGain = sirenHarmonicGain;
 
-  sirenOscillator=null;
-  sirenHarmonic=null;
-  sirenFilter=null;
-  sirenMaster=null;
-  sirenHarmonicGain=null;
+  sirenOscillator = null;
+  sirenHarmonic = null;
+  sirenFilter = null;
+  sirenMaster = null;
+  sirenHarmonicGain = null;
 
   setTimeout(()=>{
     try{
       oldOscillator.stop();
       oldHarmonic.stop();
-
       oldOscillator.disconnect();
       oldHarmonic.disconnect();
       oldFilter.disconnect();
@@ -531,14 +900,14 @@ function stopSiren(){
 }
 
 function cycleSirenMode(){
-  sirenModeIndex=(sirenModeIndex+1)%sirenModes.length;
+  sirenModeIndex = (sirenModeIndex+1)%sirenModes.length;
   updateSirenModeDisplay();
 
   if(sirenOn){
     clearInterval(sirenInterval);
     scheduleSirenSweep();
 
-    sirenInterval=setInterval(
+    sirenInterval = setInterval(
       scheduleSirenSweep,
       sirenModes[sirenModeIndex].duration*1000
     );
@@ -548,13 +917,12 @@ function cycleSirenMode(){
 }
 
 function toggleSiren(){
-  sirenOn=!sirenOn;
+  sirenOn = !sirenOn;
 
   if(sirenOn)startSiren();
   else stopSiren();
 
   updateSirenModeDisplay();
-
   showMessage(sirenOn?'SIREN ACTIVATED':'SIREN DEACTIVATED');
 }
 
@@ -565,14 +933,14 @@ function toggleSiren(){
 let messageTimeout;
 
 function showMessage(text){
-  const el=document.getElementById('message');
-  el.textContent=text;
-  el.style.opacity=1;
+  const el = document.getElementById('message');
+  el.textContent = text;
+  el.style.opacity = 1;
 
   clearTimeout(messageTimeout);
 
-  messageTimeout=setTimeout(()=>{
-    el.style.opacity=0;
+  messageTimeout = setTimeout(()=>{
+    el.style.opacity = 0;
   },1800);
 }
 
@@ -594,38 +962,54 @@ function hitsBuilding(x,z){
 }
 
 // ==========================================
-// GTA-STYLE FIXED CAMERA
+// FIXED CAMERA SYSTEM
 // ==========================================
 
-const cameraTarget=new THREE.Vector3();
-const cameraDesired=new THREE.Vector3();
-const lookTarget=new THREE.Vector3();
+// Both cameras are locked directly to the car.
+// There is no camera lerping, speed zoom, or trailing.
 
-function updateCamera(dt){
+const cameraOffset = new THREE.Vector3();
+const cameraLookTarget = new THREE.Vector3();
+const cameraForward = new THREE.Vector3(0,0,-1);
 
-  // LOCKED CHASE CAMERA:
-  // Keep the original close distance. Do not ease, lag, zoom, or drift.
-  const distance=9;
-  const height=3.8;
-
-  const offset=new THREE.Vector3(0,height,distance);
-  offset.applyAxisAngle(new THREE.Vector3(0,1,0),heading);
-
-  cameraDesired.copy(car.position).add(offset);
-
-  // Attach the camera directly to the car so it never pans away
-  // or falls behind when accelerating.
-  camera.position.copy(cameraDesired);
-
-  // Aim farther down the road without moving the camera farther back.
-  lookTarget.set(
-    car.position.x-Math.sin(heading)*15,
-    car.position.y+1.0,
-    car.position.z-Math.cos(heading)*15
+function updateCamera(){
+  cameraForward.set(
+    -Math.sin(heading),
+    0,
+    -Math.cos(heading)
   );
 
-  cameraTarget.copy(lookTarget);
-  camera.lookAt(cameraTarget);
+  if(cameraMode===0){
+    // Chase camera: fixed distance behind the car
+    cameraOffset.set(0,3.8,9);
+    cameraOffset.applyAxisAngle(
+      new THREE.Vector3(0,1,0),
+      heading
+    );
+
+    camera.position.copy(car.position).add(cameraOffset);
+
+    cameraLookTarget.copy(car.position)
+      .addScaledVector(cameraForward,18);
+
+    cameraLookTarget.y += 1.0;
+  }else{
+    // Hood camera: mounted near the front of the vehicle
+    cameraOffset.set(0,2.35,-1.25);
+    cameraOffset.applyAxisAngle(
+      new THREE.Vector3(0,1,0),
+      heading
+    );
+
+    camera.position.copy(car.position).add(cameraOffset);
+
+    cameraLookTarget.copy(car.position)
+      .addScaledVector(cameraForward,32);
+
+    cameraLookTarget.y += 1.0;
+  }
+
+  camera.lookAt(cameraLookTarget);
 }
 
 // ==========================================
@@ -633,57 +1017,56 @@ function updateCamera(dt){
 // ==========================================
 
 function update(dt){
-
   if(!started||paused)return;
 
-  const forward=keys['KeyW']||keys['ArrowUp'];
-  const backward=keys['KeyS']||keys['ArrowDown'];
-  const left=keys['KeyA']||keys['ArrowLeft'];
-  const right=keys['KeyD']||keys['ArrowRight'];
-  const handbrake=keys['Space'];
+  const forward = keys['KeyW']||keys['ArrowUp'];
+  const backward = keys['KeyS']||keys['ArrowDown'];
+  const left = keys['KeyA']||keys['ArrowLeft'];
+  const right = keys['KeyD']||keys['ArrowRight'];
+  const handbrake = keys['Space'];
 
-  if(forward)speed+=22*dt;
-  else if(backward)speed-=30*dt;
-  else speed*=Math.pow(.985,dt*60);
+  if(forward)speed += 22*dt;
+  else if(backward)speed -= 30*dt;
+  else speed *= Math.pow(.985,dt*60);
 
-  speed=THREE.MathUtils.clamp(speed,-12,48);
+  speed = THREE.MathUtils.clamp(speed,-12,48);
 
-  if(handbrake)speed*=Math.pow(.90,dt*60);
+  if(handbrake)speed *= Math.pow(.90,dt*60);
 
-  const input=(right?1:0)-(left?1:0);
-
-  steering=THREE.MathUtils.damp(steering,input,7,dt);
+  const input = (right?1:0)-(left?1:0);
+  steering = THREE.MathUtils.damp(steering,input,7,dt);
 
   if(Math.abs(speed)>.4){
-    heading-=steering*1.35*dt*
+    heading -= steering*1.35*dt*
       Math.min(Math.abs(speed)/12,1.3)*Math.sign(speed);
   }
 
-  car.rotation.y=heading;
+  car.rotation.y = heading;
 
-  const oldX=car.position.x;
-  const oldZ=car.position.z;
+  const oldX = car.position.x;
+  const oldZ = car.position.z;
 
-  car.position.x-=Math.sin(heading)*speed*dt;
-  car.position.z-=Math.cos(heading)*speed*dt;
+  car.position.x -= Math.sin(heading)*speed*dt;
+  car.position.z -= Math.cos(heading)*speed*dt;
 
-  car.position.x=THREE.MathUtils.clamp(car.position.x,-420,420);
-  car.position.z=THREE.MathUtils.clamp(car.position.z,-420,420);
+  car.position.x = THREE.MathUtils.clamp(car.position.x,-420,420);
+  car.position.z = THREE.MathUtils.clamp(car.position.z,-420,420);
 
   if(hitsBuilding(car.position.x,car.position.z)){
-    car.position.x=oldX;
-    car.position.z=oldZ;
-    speed*=-.15;
+    car.position.x = oldX;
+    car.position.z = oldZ;
+    speed *= -.15;
   }
 
+  // Wheel rotation
   for(const wheel of wheels){
-    wheel.rotation.x+=speed*dt*.7;
+    wheel.rotation.x += speed*dt*.7;
   }
 
   updateLights();
-  updateCamera(dt);
+  updateCamera();
 
-  document.getElementById('speed').textContent=
+  document.getElementById('speed').textContent =
     String(Math.round(Math.abs(speed)*2.237)).padStart(3,'0');
 }
 
@@ -694,62 +1077,72 @@ function update(dt){
 function animate(){
   requestAnimationFrame(animate);
 
-  const dt=Math.min(clock.getDelta(),.04);
+  const dt = Math.min(clock.getDelta(),.04);
 
   update(dt);
   renderer.render(scene,camera);
 }
 
-camera.position.set(0,4,9);
-camera.lookAt(0,1.5,-5);
-
+updateCamera();
 animate();
 
 // ==========================================
-// MENU
+// MENU AND PAUSE
 // ==========================================
 
-document.getElementById('startButton').onclick=()=>{
-  started=true;
-  paused=false;
+document.getElementById('startButton').onclick = ()=>{
+  started = true;
+  paused = false;
 
-  document.getElementById('menu').style.display='none';
-  document.getElementById('hud').style.display='block';
+  document.getElementById('menu').style.display = 'none';
+  document.getElementById('hud').style.display = 'block';
 
-  camera.position.set(0,4,9);
-  cameraTarget.set(0,1.5,-5);
+  updateCamera();
   clock.getDelta();
+  showMessage('PATROL STARTED');
 };
 
 function togglePause(){
-  paused=!paused;
+  paused = !paused;
 
-  document.getElementById('pauseScreen').style.display=
+  document.getElementById('pauseScreen').style.display =
     paused?'flex':'none';
 }
 
-document.getElementById('resumeButton').onclick=()=>{
-  paused=false;
-  document.getElementById('pauseScreen').style.display='none';
+document.getElementById('resumeButton').onclick = ()=>{
+  paused = false;
+  document.getElementById('pauseScreen').style.display = 'none';
   clock.getDelta();
 };
 
-document.getElementById('exitButton').onclick=()=>{
-  started=false;
-  paused=false;
-  speed=0;
-  lightsOn=false;
-  sirenOn=false;
+document.getElementById('exitButton').onclick = ()=>{
+  started = false;
+  paused = false;
+  speed = 0;
+  lightsOn = false;
+  sirenOn = false;
+  cameraMode = 0;
 
   stopSiren();
 
-  document.getElementById('lightStatus').textContent='ELS: OFF';
-  document.getElementById('sirenStatus').textContent='SIREN: OFF';
-  updateSirenModeDisplay();
+  car.position.set(0,0,0);
+  heading = 0;
+  car.rotation.y = 0;
 
-  document.getElementById('pauseScreen').style.display='none';
-  document.getElementById('hud').style.display='none';
-  document.getElementById('menu').style.display='flex';
+  for(const light of lightSegments){
+    light.mesh.material = offMaterial;
+  }
+
+  document.getElementById('lightStatus').textContent = 'ELS: OFF';
+  document.getElementById('sirenStatus').textContent = 'SIREN: OFF';
+  updateSirenModeDisplay();
+  updateCameraStatus();
+
+  document.getElementById('pauseScreen').style.display = 'none';
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('menu').style.display = 'flex';
+
+  updateCamera();
 };
 
 // ==========================================
@@ -757,9 +1150,8 @@ document.getElementById('exitButton').onclick=()=>{
 // ==========================================
 
 window.addEventListener('resize',()=>{
-  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
-
   renderer.setSize(window.innerWidth,window.innerHeight);
 });
 </script>
